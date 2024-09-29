@@ -1,0 +1,29 @@
+Api's
+
+Login
+Registration
+Search
+Add Friend (Websokit)
+Notifications (Accept / decline)
+get Friends
+
+Chats Api
+send Attachments
+new Group Chats
+get my chats
+chat details
+rename group
+delete chat
+add members
+remove members
+leave group
+get messages
+
+
+
+Admin
+
+Admin Dashboard
+Users
+Groups
+messages

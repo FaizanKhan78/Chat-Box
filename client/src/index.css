@@ -1,0 +1,70 @@
+@font-face {
+  font-family: Gilroy;
+  src: url('./fonts/Gilroy-Medium.ttf');
+}
+
+@font-face {
+  font-family: myFont;
+  src: url('./fonts/pxiEyp8kv8JHgFVrJJfedw.ttf');
+}
+
+
+.text-animation {
+  background-clip: text;
+  -webkit-background-clip: text;
+  color: transparent;
+  background-image: linear-gradient(45deg, aqua, blue, magenta, red, orange, yellow, green, cyan, blue, violet, cyan, skyblue);
+  background-size: 400% 400%;
+  animation: animate 15s ease infinite;
+}
+
+
+@keyframes animate {
+  0% {
+    background-position: 0 0;
+  }
+
+  25% {
+    background-position: 100% 0;
+  }
+
+  50% {
+    background-position: 100% 100%;
+  }
+
+  75% {
+    background-position: 0 100%;
+  }
+
+  100% {
+    background-position: 100% 0;
+  }
+
+}
+
+
+
+
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+  font-family: hack;
+}
+
+
+html,
+body {
+  height: 100%;
+  width: 100%;
+}
+
+.logo {
+  height: 200px;
+  object-fit: cover;
+}
+
+
+::-webkit-scrollbar {
+  display: none;
+}
