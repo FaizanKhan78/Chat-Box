@@ -15,12 +15,15 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import { toast } from "react-hot-toast";
 import { useDispatch, useSelector } from "react-redux";
 import { useNavigate, useParams } from "react-router-dom";
+import sound from "../audio/message.mp3";
 import FileMenu from "../components/dialog/FileMenu";
 import Messages from "../components/shared/Messages";
+import { FileUploader } from "../components/specific/FileUploader";
 import { InputBox } from "../components/styles/StyledComponents";
-import { v4 as uuid } from "uuid";
 import {
   ALERT,
+  CHAT_JOINT,
+  CHAT_LEAVE,
   NEW_MESSAGE,
   START_TYPING,
   STOP_TYPING,
@@ -33,12 +36,11 @@ import {
   useGetMyMessagesQuery,
 } from "../redux/api/api";
 import { removeNewMessageAlert } from "../redux/reducers/chat";
+import { setFriendProfile } from "../redux/reducers/friendProfile";
 import { setIsFileMenu } from "../redux/reducers/misc";
 import { getSocket } from "../socket";
-import useErrors from "./../hooks/useErrors";
-import { FileUploader } from "../components/specific/FileUploader";
 import TypingLoader from "./../components/Layout/Loaders/TypingLoader";
-import { setFriendProfile } from "../redux/reducers/friendProfile";
+import useErrors from "./../hooks/useErrors";
 
 const Chat = () => {
   const refContainer = useRef(null);
@@ -53,7 +55,9 @@ const Chat = () => {
     chatId: chatID,
     skip: !chatID,
   });
+
   const friendDetails = useGetMyFriendDetailsQuery({ chatId: chatID });
+
   const [details, setDetails] = useState({
     name: "",
     username: "",
@@ -69,6 +73,7 @@ const Chat = () => {
       username: friendDetails.currentData?.details?.username,
       avatar: friendDetails.currentData?.details?.avatar,
       groupChat: friendDetails?.currentData?.details?.groupChat || false,
+      bio: friendDetails?.currentData?.details?.bio,
     };
     let attachments = [];
     friendDetails?.currentData?.messages?.filter((message) => {
@@ -114,10 +119,6 @@ const Chat = () => {
 
   const navigate = useNavigate();
 
-  useEffect(() => {
-    if (!chatDetails.data?.chat) return navigate("/");
-  }, [chatDetails.data, navigate]);
-
   const newMessagesHandler = useCallback(
     (data) => {
       if (data.chatId !== chatID) return;
@@ -141,11 +142,14 @@ const Chat = () => {
   );
 
   const alertListener = useCallback(
-    (content) => {
+    (data) => {
+      if (data.chatID !== chatID) {
+        return;
+      }
       const messageForRealTime = {
-        content,
+        content: data.message,
         sender: {
-          _id: uuid(),
+          _id: data.chatId,
           name: "Admin",
         },
         chat: chatID,
@@ -174,14 +178,17 @@ const Chat = () => {
   );
 
   useEffect(() => {
+    socket.emit(CHAT_JOINT, { userId: user._id, members });
     dispatch(removeNewMessageAlert(chatID));
+
     return () => {
       setMessage("");
       setMessages([]);
       setPage(1);
       setData([]);
+      socket.emit(CHAT_LEAVE, { userId: user._id, members });
     };
-  }, [chatID, dispatch, setData]);
+  }, [chatID, dispatch]);
 
   useEffect(() => {
     if (bottomRef.current) {
@@ -197,14 +204,36 @@ const Chat = () => {
 
   const allMessages = [...data, ...messages];
 
+  // Trigger vibration
+  const handleVibrate = () => {
+    // Vibrate for 200 milliseconds
+    if (navigator.vibrate) {
+      navigator.vibrate(80); // Vibrate for 200ms
+    } else {
+      alert("Vibration API is not supported on this device.");
+    }
+  };
+
+  // Play sound
+  const playSound = () => {
+    const audio = new Audio(sound); // Ensure the correct path
+    audio.play().catch((error) => {
+      console.log("Failed to play sound. Error:", error);
+    });
+  };
+
+  // Function called on message send
   const handleSubmit = (e) => {
     e.preventDefault();
-
     if (!message.trim()) {
       toast.error("Please enter a message", getToastConfig(theme));
       return;
     }
-    // Emitting the message to the server
+
+    // Trigger vibration and sound after the user sends the message
+    handleVibrate();
+    playSound();
+
     socket.emit(NEW_MESSAGE, { chatId: chatID, members, message });
     setMessage("");
   };
@@ -230,9 +259,19 @@ const Chat = () => {
     }, [1000]);
   };
 
-  console.log("All Messages", allMessages);
-
-  console.log("Messages", message);
+  useEffect(() => {
+    // Ensuring the data is fully loaded before checking for `chat`
+    if (!chatDetails.isLoading && !chatDetails.isFetching) {
+      if (!chatDetails.data?.chat) {
+        navigate("/");
+      }
+    }
+  }, [
+    chatDetails.isLoading,
+    chatDetails.isFetching,
+    chatDetails.data,
+    navigate,
+  ]);
 
   return chatDetails?.isLoading ? (
     <Skeleton />
@@ -245,6 +284,7 @@ const Chat = () => {
       }}>
       {/* Message Container */}
       <Stack
+        id="smooth-scroll"
         ref={refContainer}
         width="100%"
         height="calc(100% - 64px)" // Adjust height to make room for the input

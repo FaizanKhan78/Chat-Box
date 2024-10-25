@@ -1,22 +1,10 @@
 import { useState } from "react";
 import { faPenToSquare } from "@fortawesome/free-solid-svg-icons";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
-import { Box, Button, Container, Stack, Typography } from "@mui/material";
+import { Box, Button, Chip, Container, Stack, Typography } from "@mui/material";
 import EditProfileModal from "../shared/EditProfileModal";
-
-const PersonalDetails = () => {
+const PersonalDetails = ({ user }) => {
   const [open, setOpen] = useState(false);
-  const [personalInfo, setPersonalInfo] = useState({
-    fullName: "Faizan Khan",
-    email: "faizankhan@gmail.com",
-    phone: "(+91) 9665228837",
-    gender: "male",
-    bio: "kjsbdufvjsajvfucjhvuyvjsdyuvj ckhvsajkjvjyskjvjhsvhj v",
-  });
-
-  const handleSave = (updatedData) => {
-    setPersonalInfo(updatedData);
-  };
 
   return (
     <Container
@@ -35,14 +23,28 @@ const PersonalDetails = () => {
         justifyContent={"space-between"}
         alignItems={{ xs: "flex-start", sm: "center" }}
         spacing={{ xs: 2, sm: 0 }}>
-        <Typography
-          sx={{
-            fontWeight: "bold",
-            fontFamily: "Gilroy",
-            fontSize: { xs: "28px", sm: "34px" },
-          }}>
-          Personal Info
-        </Typography>
+        <div>
+          <Typography
+            sx={{
+              fontWeight: "bold",
+              fontFamily: "Gilroy",
+              fontSize: { xs: "28px", sm: "34px" },
+            }}>
+            Personal Info
+          </Typography>
+          {user.appAdmin && (
+            <Chip
+              size="medium" // Use "small" or "medium"
+              variant="filled" // Use "filled" or "outlined"
+              color="success" // Use "error" for red color (danger equivalent)
+              label="App Admin" // Added label prop for text inside the Chip
+              sx={{
+                fontWeight: "bold",
+                fontFamily: "Gilroy",
+              }}
+            />
+          )}
+        </div>
 
         <Button
           onClick={() => setOpen(true)}
@@ -84,7 +86,25 @@ const PersonalDetails = () => {
               fontFamily: "Gilroy",
               fontWeight: "medium",
             }}>
-            {personalInfo.fullName}
+            {user?.name}
+          </Typography>
+        </Box>
+        <Box>
+          <Typography
+            sx={{
+              fontSize: "18px",
+              fontFamily: "Gilroy",
+              color: "text.secondary",
+            }}>
+            Bio
+          </Typography>
+          <Typography
+            sx={{
+              fontSize: "24px",
+              fontFamily: "Gilroy",
+              fontWeight: "medium",
+            }}>
+            {user?.bio}
           </Typography>
         </Box>
         <Box>
@@ -102,7 +122,7 @@ const PersonalDetails = () => {
               fontFamily: "Gilroy",
               fontWeight: "medium",
             }}>
-            {personalInfo.email}
+            {user?.email}
           </Typography>
         </Box>
         <Box>
@@ -120,17 +140,12 @@ const PersonalDetails = () => {
               fontFamily: "Gilroy",
               fontWeight: "medium",
             }}>
-            {personalInfo.phone}
+            {user?.number}
           </Typography>
         </Box>
       </Stack>
 
-      <EditProfileModal
-        open={open}
-        setOpen={setOpen}
-        initialData={personalInfo}
-        onSave={handleSave}
-      />
+      <EditProfileModal open={open} setOpen={setOpen} />
     </Container>
   );
 };

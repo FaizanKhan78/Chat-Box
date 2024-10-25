@@ -78,7 +78,7 @@ const RegistrationForm = ({ setIsLogin }) => {
         formData,
         config
       );
-      dispatch(setAuthenticatedUser(true));
+      dispatch(setAuthenticatedUser(responseData?.user));
       navigate("/");
       toast.success(responseData?.message, getToastConfig(theme));
     } catch (error) {

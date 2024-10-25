@@ -1,44 +1,61 @@
 import { useTheme } from "@emotion/react";
+import { yupResolver } from "@hookform/resolvers/yup";
 import {
   Button,
   Dialog,
   DialogActions,
   DialogContent,
   DialogTitle,
-  FormControl,
   Stack,
-  TextField,
-  Radio,
-  RadioGroup,
-  FormControlLabel,
-  FormLabel,
   TextareaAutosize,
+  TextField,
   Typography,
 } from "@mui/material";
-import { useState } from "react";
+import { useForm } from "react-hook-form";
+import { EditUserValidatorSchema } from "../../utils/validation/validator";
+import { useDispatch } from "react-redux";
+import useAsyncMutation from "./../../hooks/useAsyncMutation";
+import { useUpdateDetailsMutation } from "../../redux/api/api";
+import { setAuthenticatedUser } from "../../redux/reducers/auth";
+import { useEffect } from "react";
 
-const EditProfileModal = ({ open, setOpen, initialData, onSave }) => {
+const EditProfileModal = ({ open, setOpen }) => {
   const theme = useTheme();
-  const [formData, setFormData] = useState({
-    fullName: initialData.fullName,
-    email: initialData.email,
-    phone: initialData.phone,
-    gender: initialData.gender,
-    bio: initialData.bio,
+
+  const dispatch = useDispatch();
+
+  const {
+    reset,
+    register,
+    handleSubmit,
+    formState: { errors },
+  } = useForm({
+    resolver: yupResolver(EditUserValidatorSchema),
+    mode: "onChange",
   });
 
-  const handleInputChange = (e) => {
-    const { name, value } = e.target;
-    setFormData({
-      ...formData,
-      [name]: value,
-    });
+  const [updateDetails, _, data] = useAsyncMutation(useUpdateDetailsMutation);
+
+  const handleSave = async (data) => {
+    // Filter out empty or undefined fields
+    const filledData = Object.keys(data).reduce((acc, key) => {
+      if (data[key]) {
+        acc[key] = data[key]; // Adds key-value pairs only if data[key] is truthy
+      }
+      return acc;
+    }, {}); // The empty object {} is the starting point (accumulator)
+
+    reset();
+    // Log the filtered data or send it to the API
+    await updateDetails("Details Updated ", " Successfully ", filledData);
+    setOpen(false); // Close modal after submission
   };
 
-  const handleSave = () => {
-    onSave(formData);
-    setOpen(false);
-  };
+  useEffect(() => {
+    if (data && data.updateUser) {
+      dispatch(setAuthenticatedUser(data?.updateUser));
+    }
+  }, [data, dispatch]);
 
   return (
     <Dialog open={open} onClose={() => setOpen(false)} maxWidth="sm" fullWidth>
@@ -47,47 +64,37 @@ const EditProfileModal = ({ open, setOpen, initialData, onSave }) => {
         <Stack spacing={3} sx={{ marginTop: "10px" }}>
           <TextField
             label="Full Name"
-            name="fullName"
-            value={formData.fullName}
-            onChange={handleInputChange}
+            name="name"
+            {...register("name")}
             fullWidth
           />
+          {errors?.name && (
+            <Typography variant="caption" color="error">
+              {errors?.name?.message}
+            </Typography>
+          )}
           <TextField
             label="Email"
             name="email"
-            value={formData.email}
-            onChange={handleInputChange}
+            {...register("email")}
             fullWidth
           />
+          {errors?.email && (
+            <Typography variant="caption" color="error">
+              {errors?.email?.message}
+            </Typography>
+          )}
           <TextField
-            label="Phone"
-            name="phone"
-            value={formData.phone}
-            onChange={handleInputChange}
+            label="Mobile Number"
+            name="number"
+            {...register("number")}
             fullWidth
           />
-          <FormControl>
-            <FormLabel id="gender-label">Gender</FormLabel>
-            <RadioGroup
-              row
-              aria-labelledby="gender-label"
-              name="gender"
-              value={formData.gender}
-              onChange={handleInputChange}>
-              <FormControlLabel
-                value="female"
-                control={<Radio />}
-                label="Female"
-              />
-              <FormControlLabel value="male" control={<Radio />} label="Male" />
-              <FormControlLabel
-                value="other"
-                control={<Radio />}
-                label="Other"
-              />
-            </RadioGroup>
-          </FormControl>
-
+          {errors?.number && (
+            <Typography variant="caption" color="error">
+              {errors?.number?.message}
+            </Typography>
+          )}
           <Typography sx={{ fontSize: "20px" }}>Bio</Typography>
           <TextareaAutosize
             style={{
@@ -99,17 +106,24 @@ const EditProfileModal = ({ open, setOpen, initialData, onSave }) => {
             }}
             minRows={3}
             placeholder="Type something..."
-            value={initialData.bio}
             name="bio"
-            onChange={handleInputChange}
+            {...register("bio")}
           />
+          {errors?.bio && (
+            <Typography variant="caption" color="error">
+              {errors?.bio?.message}
+            </Typography>
+          )}
         </Stack>
       </DialogContent>
       <DialogActions>
         <Button onClick={() => setOpen(false)} color="secondary">
           Cancel
         </Button>
-        <Button onClick={handleSave} variant="contained" color="primary">
+        <Button
+          onClick={handleSubmit(handleSave)}
+          variant="contained"
+          color="primary">
           Save
         </Button>
       </DialogActions>

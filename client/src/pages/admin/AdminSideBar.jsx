@@ -15,7 +15,10 @@ import {
   useMediaQuery,
   useTheme,
 } from "@mui/material";
-import { Link, useLocation } from "react-router-dom";
+import { flushSync } from "react-dom";
+import { useDispatch } from "react-redux";
+import { Link, useLocation, useNavigate } from "react-router-dom";
+import { adminLogout } from "../../redux/thunks/admin";
 
 const AdminSideBar = ({ width = "100vw" }) => {
   const location = useLocation();
@@ -45,6 +48,24 @@ const AdminSideBar = ({ width = "100vw" }) => {
     },
   ];
 
+  const navigate = useNavigate();
+
+  const handleNavigate = (link) => {
+    if (document.startViewTransition()) {
+      document.startViewTransition(() => {
+        flushSync(() => {
+          navigate(`/admin/${link}`);
+        });
+      });
+    } else navigate(`/${link}`);
+  };
+
+  const dispatch = useDispatch();
+
+  const handleLogout = () => {
+    dispatch(adminLogout());
+  };
+
   return (
     <Stack
       width={width}
@@ -66,7 +87,7 @@ const AdminSideBar = ({ width = "100vw" }) => {
           return (
             <Link
               key={index}
-              to={tabs.path}
+              onClick={() => handleNavigate(tabs.path)}
               style={{
                 textDecoration: "none",
               }}>
@@ -111,6 +132,7 @@ const AdminSideBar = ({ width = "100vw" }) => {
         })}
         <Link
           to={"/setting"}
+          onClick={handleLogout}
           style={{
             textDecoration: "none",
           }}>

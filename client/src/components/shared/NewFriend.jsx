@@ -27,8 +27,18 @@ const NewFriend = ({ isSearch, handleNewFriend }) => {
   //* After Practical Move Search to react-form-hook
   const [searchText, setSearchText] = useState("");
   const [users, setUsers] = useState([]);
+  const [showUsers, setShowUsers] = useState(6);
   const [searchUsers] = useLazySearchUsersQuery("");
   const [loading, setLoading] = useState(true);
+
+  const handleAddUsers = () => {
+    setShowUsers((prev) => prev + 6);
+  };
+
+  const handleRemoveUsers = () => {
+    setShowUsers(6);
+  };
+
   useEffect(() => {
     const timeOutId = setTimeout(() => {
       searchUsers(searchText)
@@ -104,14 +114,39 @@ const NewFriend = ({ isSearch, handleNewFriend }) => {
               <CircularProgress />
             </Box>
           ) : users.length > 0 ? (
-            users.map((user) => (
-              <UserItem
-                user={user}
-                key={user._id}
-                handler={addFriendHandler}
-                handlerIsLoading={isLoading}
-              />
-            ))
+            <>
+              {users.slice(0, showUsers).map((user) => (
+                <UserItem
+                  user={user}
+                  key={user._id}
+                  handler={addFriendHandler}
+                  handlerIsLoading={isLoading}
+                />
+              ))}
+              <Button
+                onClick={
+                  searchText.length === 0 && showUsers >= users.length
+                    ? handleRemoveUsers
+                    : handleAddUsers
+                }
+                sx={{
+                  padding: "10px",
+                  display: "flex",
+                  justifyContent: "center",
+                  cursor: "pointer",
+                  width: "100%",
+                  marginTop: "10px",
+                  color: "#5d4fab",
+                  ":active": {
+                    color: "#3c4d9e",
+                  },
+                }}>
+                {" "}
+                {searchText.length === 0 && showUsers >= users.length
+                  ? "View Less"
+                  : "View More"}
+              </Button>
+            </>
           ) : (
             <p>No users found.</p>
           )}

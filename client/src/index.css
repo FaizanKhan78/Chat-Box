@@ -68,3 +68,39 @@ body {
 ::-webkit-scrollbar {
   display: none;
 }
+
+.profile-photo-container {
+  height: 100vh;
+  /* Set a fixed height */
+  width: 100vw;
+  /* Set a fixed width */
+  overflow: hidden;
+  /* Hide overflow */
+  display: flex;
+  /* Flexbox for centering */
+  justify-content: center;
+  /* Center horizontally */
+  align-items: center;
+  /* Center vertically */
+  position: relative;
+  /* For positioning */
+}
+
+.profile-photo {
+  height: 500px;
+  /* Fill the container */
+  width: 500px;
+  /* Fill the container */
+  object-fit: cover;
+  /* Maintain aspect ratio */
+  object-position: center;
+  /* Center the image */
+  border-radius: 50%;
+  transition: transform 0.3s ease-in-out;
+}
+
+
+.profile-photo.animate-back {
+  transform: scale(0.95);
+  /* Back navigation animation */
+}

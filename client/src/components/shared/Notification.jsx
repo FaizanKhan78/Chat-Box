@@ -1,4 +1,3 @@
-import { useTheme } from "@emotion/react";
 import {
   faCheckCircle,
   faFileAlt,
@@ -16,34 +15,31 @@ import {
   Typography,
 } from "@mui/material";
 import moment from "moment";
-import toast from "react-hot-toast";
-import { getToastConfig } from "../../lib/features";
+import { useDispatch } from "react-redux";
+import useAsyncMutation from "../../hooks/useAsyncMutation";
 import { useAcceptFriendRequestMutation } from "../../redux/api/api";
+import { decrementNotificationsCount } from "../../redux/reducers/chat";
 
 const Notification = ({
   data,
+  setRequest,
   anchorEl,
   handleNotification,
   isNotification,
 }) => {
-  const theme = useTheme();
-  const [acceptFriendRequest] = useAcceptFriendRequestMutation();
+  const dispatch = useDispatch();
+  const [acceptFriendRequest] = useAsyncMutation(
+    useAcceptFriendRequestMutation
+  );
 
   const friendRequestHandler = async (_id, accept) => {
-    try {
-      const res = await acceptFriendRequest({ requestId: _id, accept });
-
-      if (res.data?.success) {
-        toast.success(res.data.message, getToastConfig(theme));
-      } else {
-        toast.error(
-          res.data.message || "Something went wrong",
-          getToastConfig(theme)
-        );
-      }
-    } catch (error) {
-      toast.error("Something went wrong", getToastConfig(theme));
-    }
+    dispatch(decrementNotificationsCount());
+    const filterData = data?.filter((req) => req._id !== _id);
+    setRequest(filterData);
+    await acceptFriendRequest("Friend ", "Request Accepted ", {
+      requestId: _id,
+      accept,
+    });
   };
 
   const handleDownloadFile = (_id, file, accept) => {};
@@ -66,12 +62,12 @@ const Notification = ({
           Notifications
         </Typography>
 
-        {data?.request.length === 0 ? (
+        {data?.length === 0 ? (
           <Typography sx={{ textAlign: "center", py: 2 }}>
             No Notifications
           </Typography>
         ) : (
-          data?.request?.map((notif) => (
+          data?.map((notif) => (
             <MenuItem
               key={notif._id}
               sx={{ py: 1.5, display: "flex", flexDirection: "column" }}>

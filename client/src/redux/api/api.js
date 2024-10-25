@@ -135,6 +135,66 @@ const api = createApi({
       }),
       invalidatesTags: ["Chat"],
     }),
+    addGroupAdmin: builder.mutation({
+      query: ({ members, chatId }) => ({
+        url: `chat/add-group-admin`,
+        method: "PUT",
+        credentials: "include",
+        body: { members, chatId },
+      }),
+    }),
+    deleteChat: builder.mutation({
+      query: (chatId) => ({
+        url: `chat/${chatId}`,
+        credentials: "include",
+        method: "DELETE",
+      }),
+      invalidatesTags: ["Chat"],
+    }),
+    leaveGroup: builder.mutation({
+      query: (chatId) => ({
+        url: `chat/leave/${chatId}`,
+        credentials: "include",
+        method: "DELETE",
+      }),
+      invalidatesTags: ["Chat"],
+    }),
+    updateBio: builder.mutation({
+      query: (data) => ({
+        url: `user/update-bio`,
+        credentials: "include",
+        method: "PATCH",
+        body: data,
+      }),
+    }),
+    updateDetails: builder.mutation({
+      query: (data) => ({
+        url: `user/update-details`,
+        credentials: "include",
+        method: "PATCH",
+        body: data,
+      }),
+    }),
+    getUserDetails: builder.query({
+      query: ({ userId }) => ({
+        url: `admin/user-details/${userId}`,
+        credentials: "include",
+      }),
+    }),
+    getGroupChatDetails: builder.query({
+      query: ({ chatId }) => ({
+        url: `admin/chat-details/${chatId}`,
+        credentials: "include",
+      }),
+    }),
+    deleteOrRenameGroupAvatar: builder.mutation({
+      query: (data) => ({
+        url: `chat/group-avatar`,
+        credentials: "include",
+        method: "PATCH",
+        body: data,
+      }),
+    }),
   }),
 });
 export default api;
@@ -160,4 +220,18 @@ export const {
   useRemoveGroupMemberMutation,
 
   useAddGroupMembersMutation,
+
+  useAddGroupAdminMutation,
+
+  useDeleteChatMutation,
+
+  useLeaveGroupMutation,
+
+  useUpdateBioMutation,
+
+  useUpdateDetailsMutation,
+
+  useGetUserDetailsQuery,
+  useGetGroupChatDetailsQuery,
+  useDeleteOrRenameGroupAvatarMutation,
 } = api;

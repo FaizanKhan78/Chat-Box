@@ -1,6 +1,10 @@
 import { useTheme } from "@emotion/react";
 import { yupResolver } from "@hookform/resolvers/yup";
-import { Visibility, VisibilityOff } from "@mui/icons-material";
+import {
+  SwapVerticalCircleOutlined,
+  Visibility,
+  VisibilityOff,
+} from "@mui/icons-material";
 import {
   Box,
   Button,
@@ -21,9 +25,11 @@ import { server } from "../../constants/config";
 import { getToastConfig } from "../../lib/features";
 import { setAuthenticatedUser } from "../../redux/reducers/auth";
 import { LoginSchema } from "../../utils/validation/validator";
+import { LoadingButton } from "@mui/lab";
 
 const LoginForm = ({ setIsLogin }) => {
   const [showPassword, setShowPassword] = useState(false); // State to toggle password visibility
+  const [loading, setLoading] = useState(false);
   const theme = useTheme();
   const {
     register,
@@ -39,6 +45,7 @@ const LoginForm = ({ setIsLogin }) => {
   const navigate = useNavigate();
 
   const handleLoginSubmit = async (data) => {
+    setLoading(true);
     const config = {
       withCredentials: true,
       headers: {
@@ -51,7 +58,7 @@ const LoginForm = ({ setIsLogin }) => {
         data,
         config
       );
-      dispatch(setAuthenticatedUser(true));
+      dispatch(setAuthenticatedUser(response?.data?.user));
       navigate("/");
       toast.success(response?.data?.message, {
         style: {
@@ -59,6 +66,7 @@ const LoginForm = ({ setIsLogin }) => {
           backgroundColor: "background.paper",
         },
       });
+      setLoading(false);
       reset();
     } catch (error) {
       toast.error(
@@ -147,14 +155,28 @@ const LoginForm = ({ setIsLogin }) => {
           </Typography>
         )}
 
-        <Button
-          color="primary"
-          variant="contained"
-          type="submit"
-          sx={{ marginTop: 3 }}
-          fullWidth>
-          Login
-        </Button>
+        {loading ? (
+          <LoadingButton
+            sx={{
+              width: "100%",
+              marginTop: 3,
+            }}
+            loading
+            loadingPosition="center"
+            startIcon={<SwapVerticalCircleOutlined />}
+            variant="outlined">
+            Save
+          </LoadingButton>
+        ) : (
+          <Button
+            color="primary"
+            variant="contained"
+            type="submit"
+            sx={{ marginTop: 3 }}
+            fullWidth>
+            Login
+          </Button>
+        )}
         <Typography
           sx={{ marginTop: 2, textAlign: "center", color: "text.secondary" }}>
           Don&apos;t have an account?
@@ -162,6 +184,7 @@ const LoginForm = ({ setIsLogin }) => {
         <Button
           fullWidth
           variant="outlined"
+          disabled={loading}
           sx={{
             marginTop: 1,
             color: "text.secondary",

@@ -116,29 +116,37 @@ export const myGroupChats = TryCatch(async (req, res) => {
     groups,
   });
 });
-export const updateGroupAdmin = TryCatch(async (req, res, next) => {
+export const addGroupAdmin = TryCatch(async (req, res, next) => {
   const user = await User.findById(req.userID);
 
-  const { groupId, userId } = req.query;
+  const { chatId, members } = req.body;
 
-  const isAdminId = user.admin.find((i) => i.toString() === groupId);
+  // console.log(req.userID);
 
-  if (isAdminId) {
-    await Chat.findByIdAndUpdate(groupId, {
-      $push: { admin: userId },
-    });
+  // console.log(chatId, members);
 
-    await User.findByIdAndUpdate(userId, {
-      $push: { admin: groupId },
-    });
+  // console.log(isAdminId);
 
-    return res.status(200).json({
-      success: true,
-      message: "Admin Added Successfully",
-    });
-  } else {
-    return next(new ErrorHandler("You do not have access to this route", 400));
-  }
+  // if (isAdminId) {
+  //   await Chat.findByIdAndUpdate(groupId, {
+  //     $push: { admin: userId },
+  //   });
+
+  //   await User.findByIdAndUpdate(userId, {
+  //     $push: { admin: groupId },
+  //   });
+
+  //   return res.status(200).json({
+  //     success: true,
+  //     message: "Admin Added Successfully",
+  //   });
+  // } else {
+  //   return next(new ErrorHandler("You do not have access to this route", 400));
+  // }
+  return res.status(200).json({
+    success: true,
+    message: "Admin Added Successfully",
+  });
 });
 
 export const addMembers = TryCatch(async (req, res, next) => {
@@ -229,14 +237,12 @@ export const removeMember = TryCatch(async (req, res, next) => {
 
   await chat.save();
 
-  emitEvent(
-    req,
-    ALERT,
-    chat.members,
-    `${userThatWillBeRemoved.name} has been removed from the Group`
-  );
+  emitEvent(req, ALERT, chat.members, {
+    message: `${userThatWillBeRemoved.name} has been removed from the Group`,
+    chatId,
+  });
 
-  console.log(allChatMembers);
+  // console.log(allChatMembers);
 
   emitEvent(req, REFETCH_CHATS, allChatMembers);
 
@@ -267,8 +273,6 @@ export const leaveGroup = TryCatch(async (req, res, next) => {
     (admin) => admin.toString() !== req.userID.toString()
   );
 
-  console.log(remainingAdmin);
-
   if (
     chat.creator.toString() === req.userID.toString() &&
     remainingAdmin.length > 0
@@ -293,11 +297,16 @@ export const leaveGroup = TryCatch(async (req, res, next) => {
     await chat.save(),
   ]);
 
-  emitEvent(req, ALERT, chat.members, `User ${user.name}`);
+  // No matching document found for id "670a6876a5b42e3947023153" version 0 modifiedPaths "groupAdmin, creator, members"
+
+  emitEvent(req, ALERT, chat.members, {
+    chatId,
+    message: `User ${user.name} has left the group`,
+  });
 
   return res.status(200).json({
     success: true,
-    message: "Member Leave the Group",
+    message: "Leave the Group Successfully",
   });
 });
 
@@ -325,9 +334,7 @@ export const setAttachment = TryCatch(async (req, res, next) => {
   if (!chat) {
     return next(new ErrorHandler("Chat Not Found", 404));
   }
-
   const attachments = await uploadFilesToCloudinary(files);
-
   // Upload File.
   const messageForDB = {
     content: "",
@@ -347,7 +354,7 @@ export const setAttachment = TryCatch(async (req, res, next) => {
 
   const message = await Message.create(messageForDB);
 
-  console.log("Message created", message);
+  // console.log("Message created", message);
 
   emitEvent(req, NEW_MESSAGE, chat.members, {
     message: messageForRealTime,
@@ -423,6 +430,12 @@ export const renameGroup = TryCatch(async (req, res, next) => {
 
   if (!chat.groupChat) {
     return next(new ErrorHandler("This Is not a Group Chat", 404));
+  }
+
+  if (name === chat.name) {
+    return next(
+      new ErrorHandler("Name is Same write another name Please...", 401)
+    );
   }
   const isAdmin = chat.groupAdmin.find(
     (ad) => ad.toString() === req.userID.toString()
@@ -544,13 +557,14 @@ export const getFriendDetails = TryCatch(async (req, res, next) => {
 
   // Use `lean()` to get a plain JavaScript object
   const chat = await Chat.findById(chatId)
-    .populate("members", "name username avatar")
+    .populate("members", "name username avatar bio")
     .lean(); // Add this to convert Mongoose document to plain object
 
   if (chat.groupChat) {
     let details = {
       ...chat,
       avatar: chat.avatar.url,
+      bio: chat.avatar.bio,
       attachments: chat.attachments,
       members: chat.members.map((member) => ({
         avatar: member.avatar.url,
@@ -567,7 +581,9 @@ export const getFriendDetails = TryCatch(async (req, res, next) => {
     let details = chat.members.filter(
       (member) => member._id.toString() !== req.userID.toString()
     );
+    console.log(details);
     details = {
+      bio: details[0].bio,
       avatar: details[0].avatar.url,
       name: details[0].name,
       username: details[0].username,
@@ -577,5 +593,55 @@ export const getFriendDetails = TryCatch(async (req, res, next) => {
       messages,
       details,
     });
+  }
+});
+
+export const deleteOrRenameGroupAvatar = TryCatch(async (req, res, next) => {
+  const { public_id, isDelete = false, chatId } = req.body;
+  const file = req.file;
+
+  if (!chatId) {
+    return next(new ErrorHandler("Chat Id Require", 400));
+  }
+
+  const chat = await Chat.findById(chatId);
+
+  if (!chat) {
+    return next(new ErrorHandler("Chat doesn't Exist", 400));
+  }
+
+  if (isDelete) {
+    const response = await deleteFilesFromCloudinary([public_id]);
+    if (response[0].result === "not found") {
+      return next(new ErrorHandler("Image not Found", 404));
+    }
+    chat.avatar.public_id = "";
+    chat.avatar.url = "";
+    chat.save();
+    return res
+      .status(200)
+      .json({ success: true, message: "Avatar deleted Successfully" });
+  } else {
+    if (public_id) {
+      await deleteFilesFromCloudinary([public_id]);
+    }
+
+    const attachment = await uploadFilesToCloudinary([file]);
+    console.log(attachment);
+    chat.avatar.public_id = attachment[0].public_id;
+    chat.avatar.url = attachment[0].url;
+    chat.save();
+
+    // emitEvent(req, NEW_MESSAGE, chat.members, {
+    //   message: messageForRealTime,
+    //   chatId,
+    // });
+
+    //? Add emit of all the group members must get the message that group icon has change
+
+    // emitEvent(req, NEW_MESSAGE_ALERT, chat.members, { chatId });
+    return res
+      .status(200)
+      .json({ success: true, message: "Avatar Updated Successfully" });
   }
 });

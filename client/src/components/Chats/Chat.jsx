@@ -10,26 +10,45 @@ import {
   Tooltip,
   Typography,
 } from "@mui/material";
-import { lazy, Suspense, useCallback, useEffect, useState } from "react";
+import {
+  lazy,
+  Suspense,
+  useCallback,
+  useEffect,
+  useRef,
+  useState,
+} from "react";
 import { useDispatch, useSelector } from "react-redux";
 import useErrors from "../../hooks/useErrors";
 import { useMyChatsQuery } from "../../redux/api/api";
-import { setIsNewGroup, setIsSearch } from "../../redux/reducers/misc";
+import {
+  setIsDeleteMenu,
+  setIsNewGroup,
+  setIsSearch,
+  setSelectedDeleteChat,
+} from "../../redux/reducers/misc";
 import NewFriend from "../shared/NewFriend";
 import ChatList from "./ChatList";
 import { getOrSaveFromLocalStorage } from "../../lib/features";
-import { NEW_MESSAGE_ALERT, REFETCH_CHATS } from "../../constants/event";
+import {
+  NEW_MESSAGE_ALERT,
+  ONLINE_USERS,
+  REFETCH_CHATS,
+} from "../../constants/event";
 import useSocketEvents from "../../hooks/useSocketEvents";
 import { getSocket } from "../../socket";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useParams } from "react-router-dom";
+import DeleteChatMenu from "../dialog/DeleteChatMenu";
 
 const NewGroup = lazy(() => import("./../shared/NewGroup"));
 
 const Chat = () => {
+  const [onlineUsers, setOnlineUsers] = useState([]);
   const { isSearch, isNewGroup } = useSelector((state) => state.misc);
   const navigate = useNavigate();
   const dispatch = useDispatch();
   const socket = getSocket();
+  const chatID = useParams();
   const { isLoading, data, error, isError, refetch } = useMyChatsQuery("");
   const { newMessagesAlert } = useSelector((state) => state.chat);
 
@@ -41,10 +60,13 @@ const Chat = () => {
     dispatch(setIsSearch(!isSearch));
   };
 
+  const deleteOptionAnchor = useRef();
+
   const handleDeleteChat = (e, _id, groupChat) => {
     e.preventDefault();
-    console.log(_id);
-    console.log(groupChat);
+    deleteOptionAnchor.current = e.currentTarget;
+    dispatch(setIsDeleteMenu(true));
+    dispatch(setSelectedDeleteChat({ chatId: _id, groupChat }));
   };
 
   useEffect(() => {
@@ -64,8 +86,13 @@ const Chat = () => {
     navigate("/");
   }, [refetch, navigate]);
 
+  const onlineUsersListener = useCallback((data) => {
+    setOnlineUsers(data);
+  }, []);
+
   const eventHandlers = {
     [REFETCH_CHATS]: refetchListener,
+    [ONLINE_USERS]: onlineUsersListener,
   };
 
   useSocketEvents(socket, eventHandlers);
@@ -159,11 +186,14 @@ const Chat = () => {
         ) : (
           <ChatList
             chats={chats}
+            chatId={chatID}
             handleDeleteChat={handleDeleteChat}
             newMessagesAlert={newMessagesAlert}
+            onlineUsers={onlineUsers}
           />
         )}
       </div>
+      <DeleteChatMenu deleteOptionAnchor={deleteOptionAnchor} />
     </div>
   );
 };

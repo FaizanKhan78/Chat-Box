@@ -1,4 +1,4 @@
-import DisplayTable from "../../components/shared/Table";
+import DisplayTable from "../../components/shared/Table.jsx";
 
 const UserManage = () => {
   return <DisplayTable />;

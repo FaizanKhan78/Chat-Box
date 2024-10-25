@@ -71,13 +71,26 @@ const GroupList = ({ groups }) => {
                   },
                 }}>
                 <ListItemAvatar>
-                  <Avatar
-                    alt={group.name}
-                    src={
-                      group.avatar ||
-                      "https://i.pinimg.com/564x/23/85/0c/23850cbe2a878e76896ec12a822239eb.jpg"
-                    }
-                  />
+                  {group.avatar ? (
+                    <Avatar
+                      alt={group.name}
+                      src={group.avatar}
+                      sx={{
+                        width: "50px",
+                        height: "50px",
+                        objectFit: "cover",
+                      }}
+                    />
+                  ) : (
+                    <Avatar
+                      sx={{
+                        width: "50px",
+                        height: "50px",
+                        objectFit: "cover",
+                      }}>
+                      {group?.name?.slice(0, 2)?.toUpperCase()}
+                    </Avatar>
+                  )}
                 </ListItemAvatar>
                 <ListItemText
                   sx={{

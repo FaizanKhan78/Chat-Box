@@ -19,6 +19,7 @@
     "@hookform/resolvers": "^3.9.0",
     "@mui/base": "^5.0.0-beta.40",
     "@mui/icons-material": "^5.16.6",
+    "@mui/joy": "^5.0.0-beta.48",
     "@mui/lab": "^5.0.0-alpha.129",
     "@mui/material": "^5.16.6",
     "@mui/x-data-grid": "^7.14.0",
@@ -48,6 +49,7 @@
     "eslint-plugin-react": "^7.34.3",
     "eslint-plugin-react-hooks": "^4.6.2",
     "eslint-plugin-react-refresh": "^0.4.7",
+    "sass": "^1.79.5",
     "vite": "^5.3.4"
   }
 }

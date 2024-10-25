@@ -15,6 +15,7 @@ export const sendToken = (res, user, code, message) => {
   // console.log(token);
   return res.status(code).cookie("chat-box-token", token, cookieOption).json({
     success: true,
+    user,
     message,
   });
 };
@@ -27,7 +28,7 @@ export const TryCatch = (passedFunction) => async (req, res, next) => {
   }
 };
 
-export const adminSecretKey = process.env.ADMIN_SECRET_KEY || "shahidshaikh";
+export const adminSecretKey = process.env.ADMIN_SECRET_KEY || "faizankhan";
 
 export const emitEvent = (req, event, users, data) => {
   const io = req.app.get("io");
@@ -39,7 +40,22 @@ export const getOtherMember = (members, userID) => {
   return members.find((member) => member._id.toString() !== userID.toString());
 };
 
-export const deleteFilesFromCloudinary = async (public_ids) => {};
+export const deleteFilesFromCloudinary = async (public_ids = []) => {
+  try {
+    // Use Promise.all to handle multiple delete requests
+    const deletePromises = public_ids.map((public_id) =>
+      cloudinary.uploader.destroy(public_id)
+    );
+
+    // Wait for all deletions to complete
+    const results = await Promise.all(deletePromises);
+
+    return results;
+  } catch (error) {
+    console.error("Error deleting files from Cloudinary:", error);
+    throw new Error("Error deleting files from Cloudinary");
+  }
+};
 
 export const getSocket = (users = []) => {
   const sockets = users.map((user) => userSocketIds.get(user.toString()));

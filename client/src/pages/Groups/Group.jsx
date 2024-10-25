@@ -1,8 +1,9 @@
-import { Grid } from "@mui/material";
+import { Box, Button, Container, Grid, Typography } from "@mui/material";
 import { useEffect, useState } from "react";
 import { useDispatch } from "react-redux";
-import { useLocation } from "react-router-dom";
+import { useLocation, useNavigate } from "react-router-dom";
 import {
+  useDeleteChatMutation,
   useGetChatDetailsQuery,
   useGetMyGroupsQuery,
   useRemoveGroupMemberMutation,
@@ -13,6 +14,8 @@ import useAsyncMutation from "./../../hooks/useAsyncMutation";
 import useErrors from "./../../hooks/useErrors";
 import EditGroup from "./EditGroup";
 import GroupList from "./GroupList";
+import { KeyboardArrowRight } from "@mui/icons-material";
+import { flushSync } from "react-dom";
 const Group = () => {
   const { data, isError, error } = useGetMyGroupsQuery("");
   const location = useLocation();
@@ -44,10 +47,13 @@ const Group = () => {
   const [removeGroupMember, isLoadingRemoveMember] = useAsyncMutation(
     useRemoveGroupMemberMutation
   );
+  const [deleteGroup, isLoadingDeleteGroup] = useAsyncMutation(
+    useDeleteChatMutation
+  );
 
   const errors = [
     { isError, error },
-    { isError: groupDetails?.isError, error: groupDetails?.error },
+    { isError: groupDetails.isError, error: groupDetails.error },
   ];
   useErrors(errors);
 
@@ -81,28 +87,66 @@ const Group = () => {
   const openAddMemberModal = () => {
     dispatch(setIsAddMember(true));
   };
+  const navigate = useNavigate();
+  const handleNavigate = () => {
+    if (document.startViewTransition()) {
+      document.startViewTransition(() => {
+        flushSync(() => {
+          navigate("/setting");
+        });
+      });
+    }
+    navigate("/setting");
+  };
 
   return (
     <>
-      <Grid container>
-        <Grid item xs={3}>
-          <GroupList groups={data?.groups} />
+      {data?.groups.length === 0 ? (
+        <Box
+          sx={{
+            height: "100vh",
+            display: "flex",
+            flexDirection: "column",
+            alignItems: "center",
+            justifyContent: "center",
+          }}>
+          <Typography
+            sx={{
+              fontSize: "40px",
+            }}>
+            Your Are Not Group Admin of Any Group
+          </Typography>
+          <Button
+            variant="outlined"
+            endDecorator={<KeyboardArrowRight />}
+            color="success"
+            onClick={handleNavigate}>
+            Go to Back
+          </Button>{" "}
+        </Box>
+      ) : (
+        <Grid container>
+          <Grid item xs={3}>
+            <GroupList groups={data?.groups} />
+          </Grid>
+          <Grid item xs={9} sx={{ height: "100vh" }}>
+            <EditGroup
+              groupDetails={groupDetails?.data?.chat}
+              groupName={groupName}
+              handleGroupName={handleGroupName}
+              members={members}
+              groupAdmins={groupAdmins}
+              handleUpdateGroupName={handleUpdateGroupName}
+              isLoadingGroupName={isLoadingGroupName}
+              handleRemoveMember={handleRemoveMember}
+              openAddMemberModal={openAddMemberModal}
+              chatId={chatId}
+              isLoadingRemoveMember={isLoadingRemoveMember}
+              deleteGroup={deleteGroup}
+            />
+          </Grid>
         </Grid>
-        <Grid item xs={9} sx={{ height: "100vh" }}>
-          <EditGroup
-            groupDetails={groupDetails?.data?.chat}
-            groupName={groupName}
-            handleGroupName={handleGroupName}
-            members={members}
-            groupAdmins={groupAdmins}
-            handleUpdateGroupName={handleUpdateGroupName}
-            isLoadingGroupName={isLoadingGroupName}
-            handleRemoveMember={handleRemoveMember}
-            openAddMemberModal={openAddMemberModal}
-            chatId={chatId}
-          />
-        </Grid>
-      </Grid>
+      )}
     </>
   );
 };

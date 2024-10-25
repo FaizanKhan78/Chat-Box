@@ -1,6 +1,8 @@
+import { useFetchData } from "6pp";
 import SearchIcon from "@mui/icons-material/Search";
 import {
   Avatar,
+  Backdrop,
   Box,
   InputAdornment,
   TextField,
@@ -21,16 +23,21 @@ import TableHead from "@mui/material/TableHead";
 import TablePagination from "@mui/material/TablePagination";
 import TableRow from "@mui/material/TableRow";
 import * as React from "react";
+import { toast } from "react-hot-toast";
 import { dashBoardData } from "../../constants/sampleData";
 import { transformImage } from "../../lib/features";
-import { toast, Toaster } from "react-hot-toast";
-import DetailsModal from "../specific/DetailsModal";
+import { server } from "./../../constants/config";
+import useErrors from "./../../hooks/useErrors";
+import Skeleton from "./../Layout/Loaders/Skeleton";
 
+const UserDetailsModal = React.lazy(() =>
+  import("../../pages/admin/specific/UserDetailsModal")
+);
 const columns = [
-  { id: "ID", label: "ID", minWidth: 100 },
+  { id: "ID", label: "ID/Name", minWidth: 100 },
   {
     id: "avatar",
-    label: "Avatar/Name",
+    label: "Avatar",
     minWidth: 170,
     align: "left",
   },
@@ -53,9 +60,28 @@ export default function DisplayTable() {
   const [page, setPage] = React.useState(0);
   const [rowsPerPage, setRowsPerPage] = React.useState(10);
   const [searchTerm, setSearchTerm] = React.useState("");
+  const [userId, setUserId] = React.useState();
   const [filter, setFilter] = React.useState("");
   const [modal, setModal] = React.useState(false);
   const theme = useTheme();
+
+  const { data, error, loading, refetch } = useFetchData(
+    `${server}/api/v1/admin/users`,
+    "users-stats"
+  );
+
+  React.useEffect(() => {
+    refetch();
+  }, []);
+
+  useErrors([
+    {
+      isError: error,
+      error,
+    },
+  ]);
+
+  const { data: userData } = data || {};
 
   React.useEffect(() => {
     setRows(
@@ -96,17 +122,24 @@ export default function DisplayTable() {
     setPage(0);
   };
 
-  const filteredRows = rows.filter((row) => {
+  const filteredRows = userData?.filter((row) => {
     return filter
       ? row[filter].toString().toLowerCase().includes(searchTerm.toLowerCase())
       : true;
   });
 
-  const handleModal = () => {
+  const handleModal = async (id) => {
     setModal(!modal);
+    if (!modal) {
+      setUserId(id);
+    }
   };
 
-  return (
+  return loading ? (
+    <>
+      <Skeleton />
+    </>
+  ) : (
     <>
       <Paper
         sx={{
@@ -159,7 +192,6 @@ export default function DisplayTable() {
               <MenuItem value="">
                 <em>None</em>
               </MenuItem>
-              <MenuItem value={"id"}>ID</MenuItem>
               <MenuItem value={"name"}>Name</MenuItem>
               <MenuItem value={"friends"}>Friends</MenuItem>
               <MenuItem value={"groups"}>Groups</MenuItem>
@@ -188,32 +220,34 @@ export default function DisplayTable() {
             </TableHead>
             <TableBody>
               {filteredRows
-                .slice(page * rowsPerPage, page * rowsPerPage + rowsPerPage)
-                .map((row) => (
+                ?.slice(page * rowsPerPage, page * rowsPerPage + rowsPerPage)
+                ?.map((row) => (
                   <Tooltip
-                    onClick={handleModal}
-                    key={row.id}
+                    onClick={() => handleModal(row._id)}
+                    key={row._id}
                     title={row.name}
                     placement="top"
+                    arrow
                     sx={{ cursor: "pointer" }}>
                     <TableRow hover tabIndex={-1} role="checkbox">
-                      <TableCell>{row.id}</TableCell>
                       <TableCell
                         sx={{
                           display: "flex",
                           alignItems: "center",
                         }}>
-                        <Avatar
-                          src={row.avatar}
-                          alt={row.name}
-                          sx={{ marginRight: "16px", width: 40, height: 40 }}
-                        />
                         <Box>
                           <Typography>{row.name}</Typography>
                           <Typography sx={{ opacity: 0.5 }}>
                             {row.username}
                           </Typography>
                         </Box>
+                      </TableCell>
+                      <TableCell>
+                        <Avatar
+                          src={row.avatar}
+                          alt={row.name}
+                          sx={{ marginRight: "16px", width: 40, height: 40 }}
+                        />
                       </TableCell>
                       <TableCell align="right">{row.friends}</TableCell>
                       <TableCell align="right">{row.groups}</TableCell>
@@ -225,8 +259,7 @@ export default function DisplayTable() {
         </TableContainer>
         <TablePagination
           rowsPerPageOptions={[10, 25, 50, 75, 100]}
-          component="div"
-          count={filteredRows.length}
+          count={filteredRows?.length}
           rowsPerPage={rowsPerPage}
           page={page}
           onPageChange={handleChangePage}
@@ -237,9 +270,14 @@ export default function DisplayTable() {
             boxShadow: "0px -2px 5px rgba(0,0,0,0.1)",
           }}
         />
-        <Toaster position="bottom-right" reverseOrder={false} />
       </Paper>
-      {modal && <DetailsModal modal={modal} handleModal={handleModal} />}
+      <React.Suspense fallback={<Backdrop open />}>
+        <UserDetailsModal
+          modal={modal}
+          handleModal={handleModal}
+          userId={userId}
+        />
+      </React.Suspense>
     </>
   );
 }

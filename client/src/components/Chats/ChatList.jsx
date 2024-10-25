@@ -16,6 +16,7 @@ export default function ChatList({
   handleDeleteChat,
 }) {
   // console.log(chats);
+  // console.log(onlineUsers);
   return (
     <List
       sx={{
@@ -34,7 +35,9 @@ export default function ChatList({
             ({ chatId }) => chatId === _id
           );
 
-          const isOnline = members?.some((member) => onlineUsers.includes(_id));
+          const isOnline = members?.some((member) =>
+            onlineUsers.includes(member)
+          );
 
           return (
             <ChatItem

@@ -9,6 +9,8 @@ import {
   register,
   searchUser,
   sendFriendRequest,
+  updateBio,
+  updateDetails,
 } from "../controllers/user.js";
 import { singleAvatar } from "../middlewares/multer.js";
 import {
@@ -16,6 +18,7 @@ import {
   loginValidator,
   registerValidator,
   sendRequestValidator,
+  updateBioValidator,
   validateHandler,
 } from "../utils/validators.js";
 import { isAuthenticated } from "./../middlewares/auth.js";
@@ -40,6 +43,8 @@ app.get("/profile", getMyProfile);
 
 app.get("/logout", logout);
 
+app.patch("/update-bio", updateBioValidator(), validateHandler, updateBio);
+
 app.get("/search", searchUser);
 
 app.put(
@@ -55,6 +60,8 @@ app.put(
   validateHandler,
   acceptFriendRequest
 );
+
+app.patch("/update-details", updateDetails);
 
 app.get("/get-notification", getAllNotification);
 

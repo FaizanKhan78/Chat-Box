@@ -13,21 +13,27 @@ import {
   Typography,
 } from "@mui/material";
 import axios from "axios";
+import { useEffect, useState } from "react";
+import { flushSync } from "react-dom";
 import toast from "react-hot-toast";
 import { useDispatch, useSelector } from "react-redux";
 import { Link, useNavigate } from "react-router-dom";
 import PersonalDetails from "../../components/specific/PersonalDetails";
 import { VisuallyHiddenInput } from "../../components/styles/StyledComponents";
-import { clearAuthenticatedUser } from "../../redux/reducers/auth";
-import { server } from "./../../constants/config";
 import { getToastConfig } from "../../lib/features";
+import { clearAuthenticatedUser } from "../../redux/reducers/auth";
+import { getAdmin } from "../../redux/thunks/admin";
+import AdminModal from "../admin/AdminModal";
+import { server } from "./../../constants/config";
 
 // Reusable toast configuration
 
 const Setting = () => {
-  const { user } = useSelector((state) => state.auth);
-  const theme = useTheme();
+  const { user, isAdmin, adminAccess } = useSelector((state) => state.auth);
+
   const navigate = useNavigate();
+  const [modal, setModal] = useState(false);
+  const theme = useTheme();
   const dispatch = useDispatch();
 
   const handleLogout = async () => {
@@ -46,6 +52,24 @@ const Setting = () => {
     }
   };
 
+  const navigateHandler = () => {
+    if (document.startViewTransition()) {
+      document.startViewTransition(() => {
+        flushSync(() => {
+          navigate("/admin");
+        });
+      });
+    } else navigate("/admin");
+  };
+
+  const handleIsAdminModal = () => {
+    setModal(!modal);
+  };
+
+  useEffect(() => {
+    dispatch(getAdmin());
+  }, []);
+
   return (
     <Container
       sx={{
@@ -58,7 +82,7 @@ const Setting = () => {
       <Grid container alignItems={"center"}>
         <Grid item xs={3}>
           <Avatar
-            src="/Black_Kurta.jpg"
+            src={user?.avatar?.url}
             sx={{
               width: "200px",
               height: "200px",
@@ -90,20 +114,47 @@ const Setting = () => {
       </Grid>
       <Divider sx={{ marginTop: "20px" }} />
 
-      <PersonalDetails />
+      <PersonalDetails user={user} />
 
       <Box
         component={"div"}
         sx={{ display: "flex", justifyContent: "space-between" }}>
-        <Box item>
-          {user.isAdmin && (
-            <Button variant="outlined" onClick={() => navigate("/admin")}>
-              <Link style={{ textDecoration: "none", color: "gray" }}>
-                Admin Panel
-              </Link>
-            </Button>
+        <Box>
+          {isAdmin && (
+            <>
+              {!adminAccess ? (
+                <Button
+                  variant="outlined"
+                  component="label"
+                  color="primary"
+                  sx={{ fontWeight: "550", marginBottom: "20px" }}
+                  onClick={handleIsAdminModal}>
+                  <Link
+                    component="button"
+                    underline="none"
+                    style={{ color: "#c800ff", textDecoration: "none" }}>
+                    Admin Panel
+                  </Link>
+                </Button>
+              ) : (
+                <Button
+                  component="label"
+                  variant="outlined"
+                  color="primary"
+                  sx={{ fontWeight: "550", marginBottom: "20px" }}
+                  onClick={navigateHandler}>
+                  <Link
+                    to="/admin"
+                    underline="none"
+                    style={{ color: "#c800ff", textDecoration: "none" }}>
+                    Go To Panel
+                  </Link>
+                </Button>
+              )}
+            </>
           )}
         </Box>
+
         <Box item>
           <Tooltip title="logout">
             <Button
@@ -132,6 +183,7 @@ const Setting = () => {
           </Link>
         </Box>
       </Box>
+      <AdminModal modal={modal} handleClose={handleIsAdminModal} />
     </Container>
   );
 };

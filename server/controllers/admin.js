@@ -1,9 +1,9 @@
+import jwt from "jsonwebtoken";
 import { Chat } from "../models/chat.js";
 import { Message } from "../models/message.js";
 import { User } from "../models/user.js";
 import { adminSecretKey, cookieOption, TryCatch } from "../utils/features.js";
 import { ErrorHandler } from "../utils/utility.js";
-import jwt from "jsonwebtoken";
 
 export const adminLogin = TryCatch(async (req, res, next) => {
   const { secretKey } = req.body;
@@ -20,7 +20,7 @@ export const adminLogin = TryCatch(async (req, res, next) => {
     .status(200)
     .cookie("chat-box-admin-token", token, {
       ...cookieOption,
-      maxAge: 1000 * 60 * 15,
+      maxAge: 24 * 60 * 60 * 1000,
     })
     .json({
       success: true,
@@ -120,9 +120,9 @@ export const allMessages = TryCatch(async (req, res, next) => {
     .populate("chat", "groupChat");
 
   const transFormedMessages = messages.map(
-    ({ content, attachment, sender, createdAt, chat, _id }) => ({
+    ({ content, attachments, sender, createdAt, chat, _id }) => ({
       _id,
-      attachment,
+      attachment: attachments.length !== 0 ? attachments[0].url : false,
       content,
       createdAt,
       sender: {
@@ -183,4 +183,80 @@ export const getDashBoardStats = TryCatch(async (req, res, next) => {
     success: true,
     stats,
   });
+});
+export const getUserDetails = TryCatch(async (req, res, next) => {
+  const { userId } = req.params;
+
+  if (!userId) {
+    return next(new ErrorHandler("Invalid or missing User Id", 404));
+  }
+
+  // Fetch the user by userId
+  const user = await User.findById(userId);
+
+  if (!user) {
+    return next(new ErrorHandler("User not found", 404));
+  }
+
+  // Get the number of groups the user is a member of (groupChat = true)
+  const groups = await Chat.find({
+    groupChat: true,
+    members: userId,
+  }).populate("creator", "name email number username avatar"); // Populate creator info
+
+  // Get the user's friends (chats with 2 members only)
+  const friends = await Chat.find({
+    groupChat: false,
+    members: userId,
+    $expr: { $eq: [{ $size: "$members" }, 2] }, // Ensure only 2 members (user + friend)
+  }).populate({
+    path: "members",
+    match: { _id: { $ne: userId } }, // Exclude the current user from populated members
+    select: "name email number username avatar", // Fields to include in the populated members
+  });
+
+  // Construct userDetails object
+  const userDetails = {
+    _id: user._id,
+    name: user.name,
+    username: user.username,
+    email: user.email,
+    number: user.number,
+    avatar: user.avatar?.url, // Assuming avatar is an object with a 'url' field
+    bio: user.bio || "No bio available",
+    groups: groups.map((group) => ({
+      _id: group._id,
+      name: group.name, // Assuming group name exists
+      creator: group.creator, // Populated creator info
+      membersCount: group.members.length,
+    })),
+    friends: friends.map((friendChat) => ({
+      _id: friendChat._id,
+      friend: friendChat.members[0], // The other member, excluding the current user
+    })),
+  };
+
+  // Return the response with user details
+  return res.status(200).json({
+    success: true,
+    message: "User Details",
+    data: userDetails,
+  });
+});
+
+export const getChatsDetails = TryCatch(async (req, res, next) => {
+  const { chatId } = req.params;
+
+  if (!chatId) {
+    return next(new ErrorHandler("Chat Id Require", 401));
+  }
+
+  const chat = await Chat.findById(chatId).populate("members groupAdmin");
+
+  if (!chat) {
+    return next(new ErrorHandler("Chat Not Found", 404));
+  }
+  return res
+    .status(200)
+    .json({ success: true, message: "Chat Details", chatDetails: chat });
 });

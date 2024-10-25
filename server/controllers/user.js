@@ -131,7 +131,6 @@ export const sendFriendRequest = TryCatch(async (req, res, next) => {
   });
 
   emitEvent(req, NEW_FRIEND_REQUEST, [userId], "Friend Request");
-
   return res
     .status(200)
     .json({ success: true, message: "Friend Request Sent" });
@@ -235,4 +234,54 @@ export const getMyFriends = TryCatch(async (req, res, next) => {
       friends,
     });
   }
+});
+
+export const updateBio = TryCatch(async (req, res, next) => {
+  const { bio } = req.body;
+
+  const userId = req.userID;
+
+  const user = await User.findById(userId);
+
+  if (!user) {
+    return next(new ErrorHandler("User Not Found", 404));
+  }
+
+  user.bio = bio;
+  user.save();
+  return res.status(200).json({
+    success: true,
+    message: "Bio Updated Successfully",
+  });
+});
+
+export const updateDetails = TryCatch(async (req, res, next) => {
+  const userId = req.userID;
+  const { email, ...rest } = req.body;
+
+  const user = await User.findById(userId);
+
+  if (!user) {
+    return next(new ErrorHandler("User Not Found", 404));
+  }
+
+  // Check if the email is already used by another user
+  if (email) {
+    const emailExists = await User.findOne({ email, _id: { $ne: userId } });
+    if (emailExists) {
+      return next(new ErrorHandler("Email is already in use", 400)); // handle duplicate email
+    }
+  }
+
+  const updateUser = await User.findByIdAndUpdate(
+    userId,
+    { email, ...rest },
+    { new: true }
+  );
+
+  return res.status(200).json({
+    success: true,
+    message: "Details Updated Successfully",
+    updateUser,
+  });
 });

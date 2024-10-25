@@ -13,8 +13,11 @@ import adminRoutes from "./routes/admin.routes.js";
 import chatRoutes from "./routes/chat.routes.js";
 import userRoutes from "./routes/user.routes.js";
 import {
+  CHAT_JOINT,
+  CHAT_LEAVE,
   NEW_MESSAGE,
   NEW_MESSAGE_ALERT,
+  ONLINE_USERS,
   START_TYPING,
   STOP_TYPING,
 } from "./constants/event.js";
@@ -70,6 +73,7 @@ app.get("/", (req, res) => {
 });
 
 export const userSocketIds = new Map();
+const onlineUsers = new Set();
 
 io.use((socket, next) => {
   cookieParser()(
@@ -127,9 +131,29 @@ io.on("connection", (socket) => {
     socket.to(membersSockets).emit(STOP_TYPING, { chatId });
   });
 
+  socket.on(CHAT_JOINT, ({ userId, members }) => {
+    console.log(userId);
+    console.log(members);
+    onlineUsers.add(userId?.toString());
+
+    const membersSocket = getSocket(members);
+
+    io.to(membersSocket).emit(ONLINE_USERS, Array.from(onlineUsers));
+  });
+
+  socket.on(CHAT_LEAVE, ({ userId, members }) => {
+    onlineUsers.delete(userId?.toString());
+
+    const membersSocket = getSocket(members);
+
+    io.to(membersSocket).emit(ONLINE_USERS, Array.from(onlineUsers));
+  });
+
   socket.on("disconnect", () => {
     userSocketIds.delete(user._id.toString());
-    console.log("user disconnect");
+    // console.log("user disconnect");
+    onlineUsers.delete(user._id?.toString());
+    socket.broadcast.emit(ONLINE_USERS, Array.from(onlineUsers));
   });
 });
 

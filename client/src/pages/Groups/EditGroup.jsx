@@ -1,10 +1,15 @@
+import { faTrash } from "@fortawesome/free-solid-svg-icons";
+import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { CameraAlt as CameraAltIcon } from "@mui/icons-material";
+import CloudUploadIcon from "@mui/icons-material/CloudUpload";
 import GroupsIcon from "@mui/icons-material/Groups";
 import {
   Avatar,
+  Backdrop,
   Box,
   Button,
   Chip,
+  CircularProgress,
   Container,
   Divider,
   Grid,
@@ -13,19 +18,25 @@ import {
   TextField,
   Typography,
 } from "@mui/material";
-import { useEffect, useRef } from "react";
+import { useEffect, useRef, useState } from "react";
+import { useDispatch, useSelector } from "react-redux";
+import { useNavigate } from "react-router-dom";
 import NotSelected from "../../components/shared/NotSelected";
+import ConfirmDelete from "../../components/specific/ConfirmDelete";
 import { VisuallyHiddenInput } from "../../components/styles/StyledComponents";
+import useAsyncMutation from "../../hooks/useAsyncMutation";
+import { useDeleteOrRenameGroupAvatarMutation } from "../../redux/api/api";
+import {
+  setIsAddGroupMember,
+  setIsDeleteDialog,
+} from "../../redux/reducers/misc";
+import AddAdminModal from "./AddAdminModal";
 import AddMemberModal from "./AddMemberModal";
-import { useSelector } from "react-redux";
-
 const EditGroup = ({
   groupDetails,
-  handleAddAdmin,
   openAddMemberModal,
   handleRemoveAdmin,
   handleRemoveMember,
-  handleDeleteGroup,
   handleGroupName,
   groupName,
   members,
@@ -33,10 +44,29 @@ const EditGroup = ({
   handleUpdateGroupName,
   isLoadingGroupName,
   chatId,
+  isLoadingRemoveMember,
+  deleteGroup,
 }) => {
+  const dispatch = useDispatch();
+  const navigate = useNavigate();
+
+  const [avatar, setAvatar] = useState(undefined);
+
+  const [avatarPreview, setAvatarPreview] = useState();
+
+  const openAddGroupAdminModal = () => {
+    dispatch(setIsAddGroupMember(true));
+  };
+
+  const handleDeleteGroup = () => {
+    deleteGroup("Deleting Group ...", groupName, chatId);
+    navigate(`/group`);
+    dispatch(setIsDeleteDialog(false));
+  };
+
   const inputRef = useRef(null);
 
-  const { isAddMember } = useSelector((state) => state.misc);
+  const { isAddMember, isAddGroupAdmin } = useSelector((state) => state.misc);
 
   // Focus the TextField when the component renders
   useEffect(() => {
@@ -44,7 +74,43 @@ const EditGroup = ({
       inputRef.current.focus();
     }
   }, []);
+  useEffect(() => {
+    if (groupDetails) {
+      setAvatarPreview(groupDetails.avatar);
+    }
+    if (avatar) {
+      const reader = new FileReader();
 
+      reader.onload = (e) => {
+        setAvatarPreview(e.target.result);
+      };
+      reader.readAsDataURL(avatar);
+    }
+  }, [avatar, groupDetails]);
+
+  const avatarHandler = (event) => {
+    setAvatar(event.target.files[0]);
+  };
+
+  const openDeleteModal = () => {
+    dispatch(setIsDeleteDialog(true));
+  };
+
+  const [deleteOrUpdateAvatar] = useAsyncMutation(
+    useDeleteOrRenameGroupAvatarMutation
+  );
+
+  const handleImageUpload = async (isDelete) => {
+    if (isDelete) {
+      await deleteOrUpdateAvatar(
+        `Deleting avatar of Group `,
+        groupDetails.name,
+        {}
+      );
+    } else {
+      await deleteOrUpdateAvatar();
+    }
+  };
   if (!groupDetails) {
     return (
       <Container
@@ -74,30 +140,84 @@ const EditGroup = ({
                     width: "100%",
                     height: "7rem",
                     objectFit: "cover",
-                    transition: "transform 0.3s ease",
+                    borderRadius: "8px",
+                    boxShadow: "0 4px 8px rgba(0,0,0,0.1)",
+                    transition: "transform 0.3s ease, box-shadow 0.3s ease",
                     ":hover": {
                       transform: "scale(1.1)",
+                      boxShadow: "0 6px 12px rgba(0,0,0,0.2)",
                     },
                   }}
-                  src={groupDetails?.avatar}
+                  src={avatarPreview}
                   alt={groupDetails?.name}
                 />
                 <IconButton
                   sx={{
                     position: "absolute",
-                    bottom: 0,
-                    right: 0,
-                    bgcolor: "rgba(0,0,0,0.5)",
+                    bottom: 8,
+                    right: 8,
+                    bgcolor: "rgba(0,0,0,0.6)",
+                    p: "6px",
+                    borderRadius: "50%",
+                    boxShadow: "0 2px 4px rgba(0,0,0,0.2)",
+                    transition: "background-color 0.3s ease",
                     ":hover": {
-                      bgcolor: "rgba(0,0,0,0.7)",
+                      bgcolor: "rgba(0,0,0,0.8)",
                     },
                     color: "white",
                   }}
                   component="label">
                   <CameraAltIcon />
-                  <VisuallyHiddenInput type="file" />
+                  <VisuallyHiddenInput type="file" onChange={avatarHandler} />
                 </IconButton>
               </Stack>
+
+              <Box
+                sx={{
+                  display: "flex",
+                  justifyContent: "center",
+                  mt: 2,
+                  gap: 2,
+                }}>
+                <Button
+                  onClick={handleImageUpload}
+                  color="primary"
+                  variant="outlined"
+                  sx={{
+                    borderRadius: "24px",
+                    padding: "8px 16px",
+                    textTransform: "none",
+                    fontSize: "0.9rem",
+                    transition: "all 0.3s ease",
+                    ":hover": {
+                      backgroundColor: "#1976d2",
+                      color: "white",
+                    },
+                  }}>
+                  <CloudUploadIcon sx={{ mr: 1 }} />
+                  Upload
+                </Button>
+                <Button
+                  onClick={() => handleImageUpload(true)}
+                  color="error"
+                  sx={{
+                    borderRadius: "24px",
+                    padding: "8px 16px",
+                    textTransform: "none",
+                    fontSize: "0.9rem",
+                    transition: "all 0.3s ease",
+                    ":hover": {
+                      backgroundColor: "#d32f2f",
+                      color: "white",
+                    },
+                  }}>
+                  <FontAwesomeIcon
+                    icon={faTrash}
+                    style={{ marginRight: "8px" }}
+                  />
+                  Delete
+                </Button>
+              </Box>
             </Grid>
 
             <Grid item>
@@ -209,7 +329,7 @@ const EditGroup = ({
             sx={{ mt: 2 }}
             variant="contained"
             color="primary"
-            onClick={handleAddAdmin}>
+            onClick={openAddGroupAdminModal}>
             Add Group Admin
           </Button>
 
@@ -221,42 +341,55 @@ const EditGroup = ({
             <Chip label="Members :" color="warning" />{" "}
           </Typography>
           <Grid container spacing={3}>
-            {members?.map((member) => (
-              <Grid item xs={6} sm={4} md={3} key={member._id}>
-                <Box
-                  sx={{
-                    border: "2px solid #fbc02d",
-                    borderRadius: "8px",
-                    p: 2,
-                    transition: "background-color 0.3s ease",
-                    ":hover": {
-                      cursor: "pointer",
-                      backgroundColor: "background.paper",
-                    },
-                  }}>
-                  <Stack direction="row" alignItems="center" spacing={2}>
-                    <Avatar
-                      sx={{
-                        transition: "transform 0.3s ease",
-                        ":hover": {
-                          transform: "scale(1.1)",
-                        },
-                      }}
-                      src={member.avatar}
-                      alt={member.name}
-                    />
-                    <Typography>{member.name}</Typography>
-                    <Button
-                      variant="outlined"
-                      color="error"
-                      size="small"
-                      onClick={() => handleRemoveMember(member._id)}>
-                      Remove
-                    </Button>
-                  </Stack>
-                </Box>
-              </Grid>
-            ))}
+            {isLoadingRemoveMember ? (
+              <>
+                <Backdrop
+                  sx={(theme) => ({
+                    color: "#fff",
+                    zIndex: theme.zIndex.drawer + 1,
+                  })}
+                  open={open}>
+                  <CircularProgress />
+                </Backdrop>
+              </>
+            ) : (
+              members?.map((member) => (
+                <Grid item xs={6} sm={4} md={3} key={member._id}>
+                  <Box
+                    sx={{
+                      border: "2px solid #fbc02d",
+                      borderRadius: "8px",
+                      p: 2,
+                      transition: "background-color 0.3s ease",
+                      ":hover": {
+                        cursor: "pointer",
+                        backgroundColor: "background.paper",
+                      },
+                    }}>
+                    <Stack direction="row" alignItems="center" spacing={2}>
+                      <Avatar
+                        sx={{
+                          transition: "transform 0.3s ease",
+                          ":hover": {
+                            transform: "scale(1.1)",
+                          },
+                        }}
+                        src={member.avatar}
+                        alt={member.name}
+                      />
+                      <Typography>{member.name}</Typography>
+                      <Button
+                        variant="outlined"
+                        color="error"
+                        size="small"
+                        onClick={() => handleRemoveMember(member._id)}>
+                        Remove
+                      </Button>
+                    </Stack>
+                  </Box>
+                </Grid>
+              ))
+            )}
           </Grid>
           <Button
             sx={{ mt: 2 }}
@@ -275,10 +408,7 @@ const EditGroup = ({
               alignItems: "center",
               justifyContent: "space-evenly",
             }}>
-            <Button
-              variant="contained"
-              color="error"
-              onClick={handleDeleteGroup}>
+            <Button variant="contained" color="error" onClick={openDeleteModal}>
               Delete Group
             </Button>
           </Box>
@@ -286,6 +416,18 @@ const EditGroup = ({
         {isAddMember && (
           <AddMemberModal chatId={chatId} groupName={groupName} />
         )}
+
+        {isAddGroupAdmin && (
+          <AddAdminModal
+            chatId={chatId}
+            groupName={groupName}
+            members={members}
+          />
+        )}
+        <ConfirmDelete
+          handleDeleteGroup={handleDeleteGroup}
+          groupName={groupName}
+        />
       </>
     );
   }

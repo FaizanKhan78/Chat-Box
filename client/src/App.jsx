@@ -1,37 +1,43 @@
-import { lazy, Suspense, useEffect, useState } from "react";
+import { Suspense, useEffect, useState } from "react";
 import { useSelector } from "react-redux";
 import { Route, BrowserRouter as Router, Routes } from "react-router-dom";
-import ProtectRoute from "./components/auth/ProtectRoute";
-import AdminSkeleton from "./components/Layout/Loaders/AdminSkeleton";
-import Skeleton from "./components/Layout/Loaders/Skeleton";
-import withAppLayout from "./components/Layout/withAppLayout";
-import NetflixIntro from "./components/NetflixIntro.jsx"; // Import the intro component
-import Chat from "./pages/Chat";
-import { SocketProvider } from "./socket.jsx";
+import introAudio from "./audio/intro.wav";
 import useProfile from "./hooks/useProfile.jsx";
-
-const GroupManage = lazy(() => import("./pages/admin/GroupManage"));
-const UserManage = lazy(() => import("./pages/admin/UserManage"));
-const MessageManage = lazy(() => import("./pages/admin/MessageManage"));
-const Home = lazy(() => import("./pages/Home"));
-const Login = lazy(() => import("./pages/Login"));
-const Group = lazy(() => import("./pages/Groups/Group.jsx"));
-const NotFound = lazy(() => import("./pages/NotFound"));
-const Admin = lazy(() => import("./pages/admin/Admin"));
-const AdminDashboard = lazy(() => import("./pages/admin/AdminDashboard"));
-const Setting = lazy(() => import("./pages/setting/Setting"));
-
-const EnhancedHome = withAppLayout(Home);
-const EnhancedChat = withAppLayout(Chat);
-const EnhancedSetting = withAppLayout(Setting);
+import {
+  AdminSkeleton,
+  Intro,
+  ProtectRoute,
+  Skeleton,
+  SocketProvider,
+} from "./imports/components";
+import { EnhancedChat, EnhancedHome, EnhancedSetting } from "./imports/layout";
+import {
+  Admin,
+  AdminDashboard,
+  Group,
+  GroupManage,
+  Login,
+  MessageManage,
+  NotFound,
+  UserManage,
+} from "./imports/pages";
 
 const App = () => {
   const [showIntro, setShowIntro] = useState(true);
   const { user, isAdmin } = useSelector((state) => state.auth);
 
   useProfile();
+
   // Netflix intro timeout
+  const playAudio = () => {
+    const audio = new Audio(introAudio);
+    audio.play().catch((error) => {
+      // console.log(error);
+    });
+  };
+
   useEffect(() => {
+    playAudio();
     const timer = setTimeout(() => {
       setShowIntro(false);
     }, 2500); // Display intro for 2.5 seconds
@@ -39,10 +45,8 @@ const App = () => {
     return () => clearTimeout(timer);
   }, []);
 
-  // Fetch user profile on mount
-
   if (showIntro) {
-    return <NetflixIntro />;
+    return <Intro />;
   }
 
   return (

@@ -1,7 +1,7 @@
 import { Box, Typography } from "@mui/material";
 import { motion } from "framer-motion";
 
-const NetflixIntro = () => {
+const Intro = () => {
   return (
     <Box
       sx={{
@@ -47,4 +47,4 @@ const NetflixIntro = () => {
   );
 };
 
-export default NetflixIntro;
+export default Intro;

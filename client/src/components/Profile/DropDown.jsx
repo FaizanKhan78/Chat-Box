@@ -4,42 +4,30 @@ import MenuItem from "@mui/material/MenuItem";
 import FormControl from "@mui/material/FormControl";
 import Select from "@mui/material/Select";
 import { TextField } from "@mui/material";
+import useAsyncMutation from "./../../hooks/useAsyncMutation";
+import { useUpdateBioMutation } from "../../redux/api/api";
 
-export default function SelectSmall({ bio }) {
-  // console.log(bio);
+export default function SelectSmall({ userName }) {
   const [status, setStatus] = React.useState("");
   const [custom, setCustom] = React.useState("");
-  const [statusValue, setStatusValue] = React.useState([
-    {
-      value: "chatOnly",
-      name: "Chat Only",
-    },
-    {
-      value: "available",
-      name: "Available",
-    },
-    {
-      value: "busy",
-      name: "Busy",
-    },
-  ]);
+  const statusValue = ["Chat Only", "Available", "Busy"];
 
-  const handleChange = (event) => {
-    setStatus(event.target.value);
+  const [updateBio] = useAsyncMutation(useUpdateBioMutation);
+
+  const handleChange = async (event) => {
+    await updateBio("Update Bio of ", userName, { bio: event.target.value });
   };
 
-  //! Add Delete Option Also and their should be only 5 status not more than that
+  const handleCustom = async (e) => {
+    if (e.key === "Enter") {
+      // Perform the update action
+      await updateBio("Update Bio of ", userName, { bio: e.target.value });
 
-  const handleCustom = (e) => {
-    if (e.key === "Enter" && custom.length > 0) {
-      setStatusValue([
-        ...statusValue,
-        {
-          value: custom.toLowerCase().trim(),
-          name: custom,
-        },
-      ]);
+      // Clear the custom input field
       setCustom("");
+
+      // Close the dropdown menu by resetting the status value to an empty string
+      setStatus("");
     }
   };
 
@@ -56,8 +44,8 @@ export default function SelectSmall({ bio }) {
           <em>None</em>
         </MenuItem>
         {statusValue.map((s) => (
-          <MenuItem key={s.value} value={s.value}>
-            {s.name}
+          <MenuItem key={s} value={s}>
+            {s}
           </MenuItem>
         ))}
         <MenuItem value={"custom"}>

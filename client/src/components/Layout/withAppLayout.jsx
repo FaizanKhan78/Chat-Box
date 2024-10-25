@@ -4,13 +4,20 @@ import Header from "./Header";
 import Chat from "../Chats/Chat";
 import Profile from "../Profile/Profile";
 import UserProfile from "../Profile/UserProfile";
-import { useLocation } from "react-router-dom";
+import { useLocation, useParams } from "react-router-dom";
 import { useTheme } from "@emotion/react";
+import { useDispatch } from "react-redux";
+import { clearFriendProfile } from "../../redux/reducers/friendProfile";
 
 const withAppLayout = (WrapComponent) => {
   return function WithAppLayoutComponent(props) {
     const location = useLocation();
     const theme = useTheme();
+    const dispatch = useDispatch();
+    const { chatID } = useParams();
+    if (!chatID) {
+      dispatch(clearFriendProfile());
+    }
     return (
       <>
         <Title />

@@ -4,12 +4,14 @@ import { createSlice } from "@reduxjs/toolkit";
 const initialState = {
   isNewGroup: false,
   isAddMember: false,
+  isAddGroupAdmin: false,
   isNotification: false,
   isMobile: false,
   isSearch: false,
   isFileMenu: false,
   isChatMenu: false,
   isDeleteMenu: false,
+  isDeleteDialog: false,
   uploadingLoader: false,
   selectedDeleteChat: {
     chatId: "",
@@ -27,6 +29,9 @@ const miscSlice = createSlice({
     },
     setIsAddMember: (state, action) => {
       state.isAddMember = action.payload;
+    },
+    setIsAddGroupMember: (state, action) => {
+      state.isAddGroupAdmin = action.payload;
     },
     setIsNotification: (state, action) => {
       state.isNotification = action.payload;
@@ -49,6 +54,9 @@ const miscSlice = createSlice({
     setUploadingLoader: (state, action) => {
       state.uploadingLoader = action.payload;
     },
+    setIsDeleteDialog: (state, action) => {
+      state.isDeleteDialog = action.payload;
+    },
     setSelectedDeleteChat: (state, action) => {
       state.selectedDeleteChat = action.payload;
     },
@@ -67,6 +75,8 @@ export const {
   setIsDeleteMenu,
   setUploadingLoader,
   setSelectedDeleteChat,
+  setIsAddGroupMember,
+  setIsDeleteDialog,
 } = miscSlice.actions;
 
 export default miscSlice;

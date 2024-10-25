@@ -51,18 +51,14 @@ export const addMemberValidator = () => [
     .withMessage("Members Must be 1-97"),
 ];
 
-export const updateGroupAdminValidator = () => [
-  query("groupId")
-    .notEmpty()
-    .withMessage("Group ID is required")
-    .custom((value) => mongoose.Types.ObjectId.isValid(value))
-    .withMessage("Invalid Group ID"),
+export const addGroupAdminValidator = () => [
+  body("chatId").notEmpty().withMessage("Chat ID is required"),
 
-  query("userId")
+  body("members")
     .notEmpty()
-    .withMessage("User ID is required")
-    .custom((value) => mongoose.Types.ObjectId.isValid(value))
-    .withMessage("Invalid User ID"),
+    .withMessage("Please Enter Members")
+    .isArray({ min: 1, max: 97 })
+    .withMessage("Members Must be 1-97"),
 ];
 
 export const removeMemberValidator = () => [
@@ -72,11 +68,7 @@ export const removeMemberValidator = () => [
 ];
 
 export const leaveGroupValidator = () => [
-  param("id")
-    .notEmpty()
-    .withMessage("Chat ID is required")
-    .custom((value) => mongoose.Types.ObjectId.isValid(value))
-    .withMessage("Invalid Chat ID"),
+  param("id").notEmpty().withMessage("Chat ID is required"),
 ];
 
 export const sendAttachmentValidator = () => [
@@ -154,6 +146,11 @@ export const acceptRequestValidator = () => [
 
 export const adminValidator = () => [
   body("secretKey").notEmpty().withMessage("Key Required"),
+];
+
+export const updateBioValidator = () => [body("bio", "Bio Require").notEmpty()];
+export const getUserDetailsValidator = () => [
+  param("userId", "User Id Required").notEmpty(),
 ];
 
 export const validateHandler = (req, res, next) => {

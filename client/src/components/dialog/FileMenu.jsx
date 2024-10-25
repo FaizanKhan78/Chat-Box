@@ -18,6 +18,11 @@ import { useDispatch, useSelector } from "react-redux";
 import { getToastConfig } from "../../lib/features";
 import { useSendAttachmentsMutation } from "../../redux/api/api";
 import { setIsFileMenu, setUploadingLoader } from "../../redux/reducers/misc";
+import {
+  setAudioCount,
+  setImageCount,
+  setVideoCount,
+} from "../../redux/reducers/friendProfile";
 
 const FileMenu = ({ anchorEl, chatId }) => {
   const { isFileMenu } = useSelector((state) => state.misc);
@@ -64,10 +69,18 @@ const FileMenu = ({ anchorEl, chatId }) => {
       const res = await sendAttachments(myForm);
       if (res.data) {
         toast.success(`${key} sent successfully`, getToastConfig(theme));
+        const type = files[0].type.split("/")[0];
+        if (type === "image") {
+          dispatch(setImageCount());
+        } else if (type === "video") {
+          dispatch(setVideoCount());
+        } else if (type === "audio") {
+          dispatch(setAudioCount());
+        }
       }
       if (res.error) {
         toast.error(
-          res.error.data.message + " upload less than 10 MB",
+          res.error.data.message + " upload less than 50 MB",
           getToastConfig(theme)
         );
       }

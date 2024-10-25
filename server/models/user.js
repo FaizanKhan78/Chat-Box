@@ -37,7 +37,7 @@ const userSchema = new Schema(
         ref: "Chat",
       },
     ],
-    isAdmin: {
+    appAdmin: {
       type: Boolean,
       default: false,
     },

@@ -10,3 +10,9 @@ export const NEW_FRIEND_REQUEST = "NEW_FRIEND_REQUEST";
 export const NEW_MESSAGE = "NEW_MESSAGE";
 export const START_TYPING = "START_TYPING";
 export const STOP_TYPING = "STOP_TYPING";
+
+export const CHAT_JOINT = "CHAT_JOINT";
+export const CHAT_LEAVE = "CHAT_LEAVE";
+export const ONLINE_USERS = "ONLINE_USERS";
+
+export const GROUP_AVATAR = "GROUP_AVATAR";

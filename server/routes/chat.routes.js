@@ -1,8 +1,9 @@
 import express from "express";
-import { isAuthenticated } from "../middlewares/auth.js";
 import {
+  addGroupAdmin,
   addMembers,
   deleteChat,
+  deleteOrRenameGroupAvatar,
   getChatDetails,
   getFriendDetails,
   getMessages,
@@ -13,10 +14,11 @@ import {
   removeMember,
   renameGroup,
   setAttachment,
-  updateGroupAdmin,
 } from "../controllers/chat.js";
-import { attachment } from "../middlewares/multer.js";
+import { isAuthenticated } from "../middlewares/auth.js";
+import { attachment, singleAvatar } from "../middlewares/multer.js";
 import {
+  addGroupAdminValidator,
   addMemberValidator,
   deleteChatValidator,
   getChatDetailsValidator,
@@ -27,7 +29,6 @@ import {
   removeMemberValidator,
   renameGroupValidator,
   sendAttachmentValidator,
-  updateGroupAdminValidator,
   validateHandler,
 } from "../utils/validators.js";
 const app = express.Router();
@@ -40,14 +41,14 @@ app.get("/my-chats", myChats);
 
 app.get("/my-groups", myGroupChats);
 
-app.patch(
-  "/update-admin",
-  updateGroupAdminValidator(),
-  validateHandler,
-  updateGroupAdmin
-);
-
 app.put("/add-members", addMemberValidator(), validateHandler, addMembers);
+
+app.put(
+  "/add-group-admin",
+  addGroupAdminValidator(),
+  validateHandler,
+  addGroupAdmin
+);
 
 app.delete(
   "/remove-member",
@@ -77,7 +78,9 @@ app.get(
   getFriendDetails
 );
 
-//* Send Messages
+//* Delete or Rename Group Avatar
+
+app.patch("/group-avatar", singleAvatar, deleteOrRenameGroupAvatar);
 
 //* Get Chat Details,rename,delete
 app
