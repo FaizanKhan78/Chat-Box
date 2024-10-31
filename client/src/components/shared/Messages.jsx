@@ -1,10 +1,12 @@
+import { useTheme } from "@emotion/react";
 import { Box, Typography } from "@mui/material";
-import { memo } from "react";
+import { motion } from "framer-motion";
 import moment from "moment";
+import { memo } from "react";
 import { fileFormat } from "../../lib/features";
 import RenderAttachment from "./RenderAttachment";
-import { useTheme } from "@emotion/react";
-import { motion } from "framer-motion";
+import { useDispatch } from "react-redux";
+import { setLinkCount } from "../../redux/reducers/friendProfile";
 
 // Framer Motion Variants
 const messageVariants = {
@@ -18,12 +20,52 @@ const attachmentVariants = {
 };
 
 const Messages = ({ message, user }) => {
-  const { sender, content, attachments = [], createdAt } = message;
+  const dispatch = useDispatch();
 
+  const incrementLinkCount = () => {
+    dispatch(setLinkCount());
+  };
+
+  // Function to check if content is a valid URL
+  const isValidURL = (string) => {
+    const urlPattern = new RegExp(
+      "^(https?:\\/\\/)" + // Protocol
+        "((([a-zA-Z\\d]([a-zA-Z\\d-]*[a-zA-Z\\d])*)\\.)+[a-zA-Z]{2,}|" + // Domain name
+        "((\\d{1,3}\\.){3}\\d{1,3}))" + // OR IPv4
+        "(\\:\\d+)?(\\/[-a-zA-Z\\d%_.~+]*)*" + // Port and path
+        "(\\?[;&a-zA-Z\\d%_.~+=-]*)?" + // Query string
+        "(\\#[-a-zA-Z\\d_]*)?$",
+      "i"
+    );
+    if (urlPattern.test(string)) {
+      incrementLinkCount();
+      return true;
+    } else {
+      return false;
+    }
+  };
+
+  // Function to check if a URL is a YouTube link and extract the video ID
+  const getYouTubeVideoID = (url) => {
+    const youtubeRegex =
+      /(?:https?:\/\/)?(?:www\.)?(?:youtube\.com\/(?:[^\/\n\s]+\/\S+\/|(?:v|e(?:mbed)?)\/|\S*?[?&]v=)|youtu\.be\/)([a-zA-Z0-9_-]{11})/;
+    const match = url.match(youtubeRegex);
+    if (match) {
+      incrementLinkCount();
+      return match[1];
+    } else {
+      return null;
+    }
+  };
+
+  const { sender, content, attachments = [], createdAt } = message;
   const theme = useTheme();
 
   const timeAgo = moment(createdAt).fromNow();
   const isUserMessage = sender?._id === user?._id;
+
+  // Check if content is a YouTube link and get the video ID
+  const youtubeVideoID = getYouTubeVideoID(content);
 
   return (
     <motion.div
@@ -48,7 +90,6 @@ const Messages = ({ message, user }) => {
         )}
         , {timeAgo}
       </motion.span>
-
       <motion.div
         style={{
           position: "relative",
@@ -66,9 +107,57 @@ const Messages = ({ message, user }) => {
         initial={{ opacity: 0, scale: 0.8 }}
         animate={{ opacity: 1, scale: 1 }}
         transition={{ duration: 0.3, ease: "easeInOut" }}>
-        {content && (
-          <Typography sx={{ fontFamily: "hack" }}>{content}</Typography>
-        )}
+        {content &&
+          (youtubeVideoID ? (
+            // Render YouTube embedded video if it is a YouTube link
+            <>
+              <Typography
+                sx={{
+                  top: 18,
+                  left: 30,
+                  fontWeight: 600,
+                  letterSpacing: "1px",
+                  textTransform: "uppercase",
+                  background: "linear-gradient(90deg, #ff416c, #ff4b2b)", // pink to orange gradient
+                  WebkitBackgroundClip: "text",
+                  WebkitTextFillColor: "transparent",
+                  fontSize: "0.85rem", // adjust as needed
+                  padding: "2px 6px",
+                  borderRadius: "4px",
+                }}>
+                Youtube
+              </Typography>
+              <div style={{ marginBottom: "5px" }}>
+                <iframe
+                  width="100%"
+                  height="200"
+                  src={`https://www.youtube.com/embed/${youtubeVideoID}`}
+                  frameBorder="0"
+                  allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                  allowFullScreen
+                  title="YouTube Video"
+                  style={{ borderRadius: "10px" }}></iframe>
+
+                <a
+                  href={content}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  style={{ color: theme.palette.primary.main }}>
+                  {content}
+                </a>
+              </div>
+            </>
+          ) : isValidURL(content) ? (
+            <a
+              href={content}
+              target="_blank"
+              rel="noopener noreferrer"
+              style={{ color: theme.palette.primary.main }}>
+              {content.slice(0, 85)}...
+            </a>
+          ) : (
+            <Typography sx={{ fontFamily: "hack" }}>{content}</Typography>
+          ))}
 
         {/* Tail for the message */}
         <motion.div
@@ -96,15 +185,15 @@ const Messages = ({ message, user }) => {
           const file = fileFormat(url);
           return (
             <motion.div
-              key={index} // Use the index or a unique key, as using 'i' may not work as expected
+              key={index}
               variants={attachmentVariants}
               initial="hidden"
               animate="visible"
               transition={{ delay: index * 0.2 }}>
               <Box>
                 <a
-                  href={file === "file" ? url : undefined} // Add the href attribute to make the link functional
-                  download={file === "file" ? true : undefined} // 'download' should be set to true for files
+                  href={file === "file" ? url : undefined}
+                  download={file === "file" ? true : undefined}
                   style={{ color: "black" }}>
                   <RenderAttachment file={file} url={url} />
                 </a>

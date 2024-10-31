@@ -36,7 +36,7 @@ import {
   useGetMyMessagesQuery,
 } from "../redux/api/api";
 import { removeNewMessageAlert } from "../redux/reducers/chat";
-import { setFriendProfile } from "../redux/reducers/friendProfile";
+import { setFriendProfile, setMembers } from "../redux/reducers/friendProfile";
 import { setIsFileMenu } from "../redux/reducers/misc";
 import { getSocket } from "../socket";
 import TypingLoader from "./../components/Layout/Loaders/TypingLoader";
@@ -92,6 +92,9 @@ const Chat = () => {
       const groupAdmin = friendDetails?.currentData?.details?.groupAdmin;
       updatedDetails = { ...updatedDetails, groupAdmin };
     }
+    if (friendDetails?.currentData?.details?.groupChat) {
+      dispatch(setMembers(friendDetails?.currentData?.details?.members));
+    }
     // Update the state with the final details object
     setDetails(updatedDetails);
 
@@ -121,6 +124,8 @@ const Chat = () => {
 
   const newMessagesHandler = useCallback(
     (data) => {
+      console.log(data);
+      console.log(chatID);
       if (data.chatId !== chatID) return;
       setMessages((prev) => [...prev, data.message]);
     },

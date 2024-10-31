@@ -1,6 +1,10 @@
 import { useTheme } from "@emotion/react";
 import { yupResolver } from "@hookform/resolvers/yup";
-import { CameraAlt as CameraAltIcon } from "@mui/icons-material";
+import {
+  CameraAlt as CameraAltIcon,
+  Visibility,
+  VisibilityOff,
+} from "@mui/icons-material";
 import PersonIcon from "@mui/icons-material/Person";
 import {
   Avatar,
@@ -10,11 +14,15 @@ import {
   FormControl,
   FormHelperText,
   IconButton,
+  InputAdornment,
   InputLabel,
   Stack,
   Typography,
+  Collapse,
+  List,
+  ListItem,
 } from "@mui/material";
-import { LoadingButton } from "@mui/lab"; // Import LoadingButton
+import { LoadingButton } from "@mui/lab";
 import axios from "axios";
 import { useEffect, useState } from "react";
 import { useForm } from "react-hook-form";
@@ -39,10 +47,14 @@ const RegistrationForm = ({ setIsLogin }) => {
   });
 
   const [imagePreview, setImagePreview] = useState(null);
-  const [loading, setLoading] = useState(false); // Loading state for the button
+  const [loading, setLoading] = useState(false);
+  const [showPassword, setShowPassword] = useState(false);
+  const [showPasswordConstraints, setShowPasswordConstraints] = useState(false);
   const dispatch = useDispatch();
   const file = watch("avatar");
   const theme = useTheme();
+
+  const password = watch("password");
 
   useEffect(() => {
     if (file && file[0]) {
@@ -57,9 +69,14 @@ const RegistrationForm = ({ setIsLogin }) => {
   const navigate = useNavigate();
 
   const handleRegisterSubmit = async (data) => {
-    setLoading(true); // Set loading to true when the request starts
+    setLoading(true);
+    console.log("Hello");
+
     const formData = new FormData();
-    formData.append("avatar", data.avatar[0]);
+    if (data.avatar && data.avatar[0]) {
+      formData.append("avatar", data.avatar[0]); // Only append if avatar exists
+    }
+
     formData.append("name", data.name);
     formData.append("username", data.username);
     formData.append("email", data.email);
@@ -71,7 +88,6 @@ const RegistrationForm = ({ setIsLogin }) => {
         "Content-Type": "multipart/form-data",
       },
     };
-
     try {
       const { data: responseData } = await axios.post(
         `${server}/api/v1/user/register`,
@@ -87,7 +103,25 @@ const RegistrationForm = ({ setIsLogin }) => {
         getToastConfig(theme)
       );
     } finally {
-      setLoading(false); // Set loading to false when the request completes
+      setLoading(false);
+    }
+  };
+
+  const checkPasswordConstraint = (constraint) => {
+    if (!password) return false;
+    switch (constraint) {
+      case "uppercase":
+        return /[A-Z]/.test(password);
+      case "lowercase":
+        return /[a-z]/.test(password);
+      case "number":
+        return /\d/.test(password);
+      case "specialChar":
+        return /[@$!%*?&]/.test(password);
+      case "length":
+        return password.length >= 8 && password.length <= 20;
+      default:
+        return false;
     }
   };
 
@@ -104,11 +138,7 @@ const RegistrationForm = ({ setIsLogin }) => {
         sx={{ width: "100%", maxWidth: "400px" }}>
         <Stack position="relative" width="5rem" margin="auto">
           <Avatar
-            sx={{
-              width: "100%",
-              height: "5rem",
-              objectFit: "contain",
-            }}
+            sx={{ width: "100%", height: "5rem", objectFit: "contain" }}
             src={imagePreview}
           />
           <IconButton
@@ -117,9 +147,7 @@ const RegistrationForm = ({ setIsLogin }) => {
               bottom: 0,
               right: 0,
               bgcolor: "rgba(0,0,0,0.5)",
-              ":hover": {
-                bgcolor: "rgba(0,0,0,0.7)",
-              },
+              ":hover": { bgcolor: "rgba(0,0,0,0.7)" },
               color: "text.secondary",
             }}
             component="label">
@@ -127,11 +155,6 @@ const RegistrationForm = ({ setIsLogin }) => {
             <VisuallyHiddenInput type="file" {...register("avatar")} />
           </IconButton>
         </Stack>
-        {errors.avatar && (
-          <Typography color="error" variant="caption">
-            {errors.avatar.message}
-          </Typography>
-        )}
         <FormControl fullWidth margin="normal" variant="filled">
           <InputLabel htmlFor="username" sx={{ color: "text.secondary" }}>
             Username
@@ -181,20 +204,76 @@ const RegistrationForm = ({ setIsLogin }) => {
           </InputLabel>
           <FilledInput
             id="password"
-            type="password"
+            type={showPassword ? "text" : "password"}
             autoComplete="password"
             {...register("password")}
             sx={{ color: "text.secondary" }}
+            onFocus={() => setShowPasswordConstraints(true)}
+            onBlur={() => setShowPasswordConstraints(false)}
+            endAdornment={
+              <InputAdornment position="end">
+                <IconButton
+                  onClick={() => setShowPassword(!showPassword)}
+                  onMouseDown={(e) => e.preventDefault()}
+                  edge="end">
+                  {showPassword ? <VisibilityOff /> : <Visibility />}
+                </IconButton>
+              </InputAdornment>
+            }
           />
           {errors.password && (
             <FormHelperText error>{errors.password.message}</FormHelperText>
           )}
         </FormControl>
+        <Collapse in={showPasswordConstraints}>
+          <List dense>
+            <ListItem
+              sx={{
+                color: checkPasswordConstraint("uppercase")
+                  ? "success.main"
+                  : "text.secondary",
+              }}>
+              - At least one uppercase letter
+            </ListItem>
+            <ListItem
+              sx={{
+                color: checkPasswordConstraint("lowercase")
+                  ? "success.main"
+                  : "text.secondary",
+              }}>
+              - At least one lowercase letter
+            </ListItem>
+            <ListItem
+              sx={{
+                color: checkPasswordConstraint("number")
+                  ? "success.main"
+                  : "text.secondary",
+              }}>
+              - At least one number
+            </ListItem>
+            <ListItem
+              sx={{
+                color: checkPasswordConstraint("specialChar")
+                  ? "success.main"
+                  : "text.secondary",
+              }}>
+              - At least one special character (@, $, !, %, *, ?, &)
+            </ListItem>
+            <ListItem
+              sx={{
+                color: checkPasswordConstraint("length")
+                  ? "success.main"
+                  : "text.secondary",
+              }}>
+              - Between 8 and 20 characters
+            </ListItem>
+          </List>
+        </Collapse>
         <LoadingButton
           color="primary"
           variant="contained"
           type="submit"
-          loading={loading} // Show loading spinner when `loading` is true
+          loading={loading}
           loadingPosition="start"
           startIcon={<PersonIcon />}
           sx={{ marginTop: 3 }}

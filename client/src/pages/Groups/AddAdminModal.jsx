@@ -1,35 +1,37 @@
+import AddIcon from "@mui/icons-material/Add";
+import RemoveIcon from "@mui/icons-material/Remove";
+import { IconButton } from "@mui/material";
+import Avatar from "@mui/material/Avatar";
 import Button from "@mui/material/Button";
 import Dialog from "@mui/material/Dialog";
 import DialogActions from "@mui/material/DialogActions";
 import DialogContent from "@mui/material/DialogContent";
 import DialogTitle from "@mui/material/DialogTitle";
+import List from "@mui/material/List";
+import ListItem from "@mui/material/ListItem";
+import ListItemAvatar from "@mui/material/ListItemAvatar";
+import ListItemText from "@mui/material/ListItemText";
 import Slide from "@mui/material/Slide";
 import * as React from "react";
 import { useDispatch, useSelector } from "react-redux";
-import useErrors from "../../hooks/useErrors";
-import {
-  useAddGroupAdminMutation,
-  useGetAvailableFriendsQuery,
-} from "../../redux/api/api";
 import { setIsAddGroupMember } from "../../redux/reducers/misc";
-import {
-  Avatar,
-  Box,
-  IconButton,
-  List,
-  ListItem,
-  Skeleton,
-  Typography,
-} from "@mui/material";
-import CloseIcon from "@mui/icons-material/Close";
-import AddIcon from "@mui/icons-material/Add";
-import useAsyncMutation from "../../hooks/useAsyncMutation";
+import useAsyncMutation from "./../../hooks/useAsyncMutation";
+import { useAddGroupAdminMutation } from "../../redux/api/api";
+import toast from "react-hot-toast";
+import { getToastConfig } from "../../lib/features";
+import { useTheme } from "@emotion/react";
 
 const Transition = React.forwardRef(function Transition(props, ref) {
   return <Slide direction="up" ref={ref} {...props} />;
 });
 
-const AddAdminModal = ({ chatId, groupName, members }) => {
+const AddAdminModal = ({
+  chatId,
+  groupName,
+  groupAdmins,
+  members,
+  setGroupAdmins,
+}) => {
   const { isAddGroupAdmin } = useSelector((state) => state.misc);
   const dispatch = useDispatch();
 
@@ -37,44 +39,43 @@ const AddAdminModal = ({ chatId, groupName, members }) => {
     dispatch(setIsAddGroupMember(false));
   };
 
-  const { isLoading, data, isError, error } =
-    useGetAvailableFriendsQuery(chatId);
+  const [selectedUser, setSelectedUser] = React.useState([]);
 
-  const errors = [{ isError, error }];
-
-  const [selectGroupAdmin, setSelectedGroupAdmin] = React.useState([]);
-
-  useErrors(errors);
-
-  let friendsLeft = data?.availableFriends;
-
-  const [allMembers, setAllMembers] = React.useState([]);
-
-  React.useEffect(() => {
-    if (!isLoading && data.availableFriends) {
-      setAllMembers([...allMembers, ...members, ...friendsLeft]);
-    }
-
-    return () => {
-      setAllMembers([]);
-    };
-  }, [isLoading, members, friendsLeft]);
-
-  const handleAddGroupAdmin = (id) => {
-    setSelectedGroupAdmin((prev) =>
-      prev.includes(id) ? prev.filter((member) => member !== id) : [...prev, id]
+  const makeUserAdminHandler = (userId) => {
+    setSelectedUser((prev) =>
+      prev.includes(userId)
+        ? prev.filter((id) => id !== userId)
+        : [...prev, userId]
     );
   };
 
-  const [addGroupAdmin] = useAsyncMutation(useAddGroupAdminMutation);
+  const [addGroupAdmin, _, data] = useAsyncMutation(useAddGroupAdminMutation);
 
-  const handleSubmit = () => {
-    addGroupAdmin("Adding Group Admin", groupName, {
-      chatId,
-      members: selectGroupAdmin,
-    });
-    console.log(selectGroupAdmin);
-    // closeAddGroupAdminModal();
+  React.useEffect(() => {
+    if (data) {
+      setGroupAdmins(data.updateGroupAdmin);
+    }
+  }, [data]);
+
+  const remainingMembers = members.filter(
+    (member) => !groupAdmins?.some((admin) => admin._id === member._id)
+  );
+
+  const theme = useTheme();
+
+  const handleSubmit = async () => {
+    if (selectedUser.length === 0) {
+      toast.error(
+        "No Group Members Selected Please Cancel",
+        getToastConfig(theme)
+      );
+    } else {
+      await addGroupAdmin("Adding new Group Admin in ", groupName, {
+        members: selectedUser,
+        chatId,
+      });
+      closeAddGroupAdminModal();
+    }
   };
 
   return (
@@ -85,59 +86,75 @@ const AddAdminModal = ({ chatId, groupName, members }) => {
         keepMounted
         onClose={closeAddGroupAdminModal}
         aria-describedby="alert-dialog-slide-description">
-        <DialogTitle>{"Add Admin"}</DialogTitle>
+        <DialogTitle>
+          {"Add Admin in "}
+          {groupName}
+        </DialogTitle>
         <DialogContent>
-          <Box id="alert-dialog-slide-description">
-            <List sx={{ width: "300px" }}>
-              {isLoading ? (
-                <ListItem sx={{ display: "block", width: "200px" }}>
-                  <Skeleton />
-                  <Skeleton />
-                  <Skeleton />
-                  <Skeleton />
-                </ListItem>
-              ) : (
-                <>
-                  {allMembers?.length === 0 && (
-                    <Typography>No Friends</Typography>
-                  )}
-                  {allMembers?.map((member, i) => (
-                    <ListItem
-                      key={i}
+          <List sx={{ width: "300px", maxWidth: 500 }}>
+            {remainingMembers.length > 0 ? (
+              remainingMembers.map((member, i) => (
+                <ListItem
+                  key={i}
+                  sx={{
+                    display: "flex",
+                    alignItems: "center",
+                    paddingY: 1,
+                    borderBottom: "1px solid #f0f0f0",
+                  }}>
+                  <ListItemAvatar>
+                    <Avatar src={member.avatar} alt={member.name} />
+                  </ListItemAvatar>
+                  <ListItemText
+                    primary={member.name}
+                    primaryTypographyProps={{
+                      fontSize: "1rem",
+                      fontWeight: "500",
+                      color: "text.primary",
+                    }}
+                    sx={{ marginLeft: 1 }}
+                  />
+                  {selectedUser.includes(member._id) ? (
+                    <IconButton
+                      onClick={() => makeUserAdminHandler(member._id)}
+                      edge="end"
+                      aria-label="add"
                       sx={{
-                        display: "flex",
-                        justifyContent: "space-between",
-                        cursor: "pointer",
-                        ":hover": "black",
+                        color: "red",
+                        "&:hover": { color: "primary.dark" },
                       }}>
-                      {/* Display member details */}
-                      <Avatar src={member.avatar} />
-                      <Typography sx={{ fontSize: "24px" }}>
-                        {member.name}
-                      </Typography>
+                      <RemoveIcon />
+                    </IconButton>
+                  ) : (
+                    <>
                       <IconButton
+                        onClick={() => makeUserAdminHandler(member._id)}
+                        edge="end"
+                        aria-label="add"
                         sx={{
-                          backgroundColor: selectGroupAdmin.includes(member._id)
-                            ? "red"
-                            : "green",
-                        }}
-                        onClick={() => handleAddGroupAdmin(member._id)}>
-                        {selectGroupAdmin.includes(member._id) ? (
-                          <CloseIcon />
-                        ) : (
-                          <AddIcon />
-                        )}
+                          color: "primary.main",
+                          "&:hover": { color: "primary.dark" },
+                        }}>
+                        <AddIcon />
                       </IconButton>
-                    </ListItem>
-                  ))}
-                </>
-              )}
-            </List>
-          </Box>
+                    </>
+                  )}
+                </ListItem>
+              ))
+            ) : (
+              <ListItem>
+                <ListItemText primary="No members available to add as admin" />
+              </ListItem>
+            )}
+          </List>
         </DialogContent>
         <DialogActions>
-          <Button onClick={closeAddGroupAdminModal}>Disagree</Button>
-          <Button onClick={handleSubmit}>Agree</Button>
+          <Button onClick={closeAddGroupAdminModal} color="secondary">
+            Cancel
+          </Button>
+          <Button onClick={handleSubmit} color="primary">
+            Confirm
+          </Button>
         </DialogActions>
       </Dialog>
     </React.Fragment>

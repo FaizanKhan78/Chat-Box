@@ -2,6 +2,7 @@
 import { compare } from "bcrypt";
 import {
   cookieOption,
+  deleteFilesFromCloudinary,
   emitEvent,
   getOtherMember,
   sendToken,
@@ -16,11 +17,11 @@ import { NEW_FRIEND_REQUEST, REFETCH_CHATS } from "../constants/event.js";
 export const register = async (req, res, next) => {
   try {
     const { name, username } = req.body;
-
+    console.log(req.body);
     const file = req.file; // File should now be in req.file
-
     if (!file) {
-      return next(new ErrorHandler("Avatar required", 400));
+      const user = await User.create(req.body);
+      sendToken(res, user, 200, "User Created");
     }
 
     const userExist = await User.findOne({ username, name });
@@ -284,4 +285,42 @@ export const updateDetails = TryCatch(async (req, res, next) => {
     message: "Details Updated Successfully",
     updateUser,
   });
+});
+
+export const deleteOrUpdateAvatar = TryCatch(async (req, res, next) => {
+  const { public_id, isDelete = false } = req.body;
+
+  const userId = req.userID;
+  const file = req.file;
+  if (!userId) {
+    return next(new ErrorHandler("Chat Id Require", 400));
+  }
+
+  const user = await User.findById(userId);
+
+  if (isDelete) {
+    const response = await deleteFilesFromCloudinary([public_id]);
+    if (response[0].result === "not found") {
+      return next(new ErrorHandler("Image not Found", 404));
+    }
+    user.avatar.public_id = "";
+    user.avatar.url = "";
+    user.save();
+    return res
+      .status(200)
+      .json({ success: true, message: "Avatar deleted Successfully", user });
+  } else {
+    if (public_id) {
+      await deleteFilesFromCloudinary([public_id]);
+    }
+    const attachment = await uploadFilesToCloudinary([file]);
+    // console.log(attachment);
+    user.avatar.public_id = attachment[0].public_id;
+    user.avatar.url = attachment[0].url;
+    user.save();
+
+    return res
+      .status(200)
+      .json({ success: true, message: "Avatar deleted Successfully", user });
+  }
 });

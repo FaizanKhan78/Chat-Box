@@ -6,9 +6,11 @@ import useProfile from "./hooks/useProfile.jsx";
 import {
   AdminSkeleton,
   Intro,
+  ProfilePhoto,
   ProtectRoute,
   Skeleton,
   SocketProvider,
+  UserPhoto,
 } from "./imports/components";
 import { EnhancedChat, EnhancedHome, EnhancedSetting } from "./imports/layout";
 import {
@@ -64,7 +66,8 @@ const App = () => {
           <Route path="/chat/:chatID" element={<EnhancedChat />} />
           <Route path="/group" element={<Group />} />
           <Route path="/setting" element={<EnhancedSetting />} />
-
+          <Route path="/profile-photo" element={<ProfilePhoto />} />
+          <Route path="/user-photo" element={<UserPhoto />} />
           {isAdmin && (
             <Route
               path="/admin"

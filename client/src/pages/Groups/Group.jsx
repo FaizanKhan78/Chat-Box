@@ -47,9 +47,7 @@ const Group = () => {
   const [removeGroupMember, isLoadingRemoveMember] = useAsyncMutation(
     useRemoveGroupMemberMutation
   );
-  const [deleteGroup, isLoadingDeleteGroup] = useAsyncMutation(
-    useDeleteChatMutation
-  );
+  const [deleteGroup] = useAsyncMutation(useDeleteChatMutation);
 
   const errors = [
     { isError, error },
@@ -99,6 +97,10 @@ const Group = () => {
     navigate("/setting");
   };
 
+  const handleRemoveAdmin = (id) => {
+    console.log(id);
+  };
+
   return (
     <>
       {data?.groups.length === 0 ? (
@@ -133,6 +135,7 @@ const Group = () => {
             <EditGroup
               groupDetails={groupDetails?.data?.chat}
               groupName={groupName}
+              handleRemoveAdmin={handleRemoveAdmin}
               handleGroupName={handleGroupName}
               members={members}
               groupAdmins={groupAdmins}
@@ -143,6 +146,7 @@ const Group = () => {
               chatId={chatId}
               isLoadingRemoveMember={isLoadingRemoveMember}
               deleteGroup={deleteGroup}
+              setGroupAdmins={setGroupAdmins}
             />
           </Grid>
         </Grid>

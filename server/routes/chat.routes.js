@@ -43,7 +43,7 @@ app.get("/my-groups", myGroupChats);
 
 app.put("/add-members", addMemberValidator(), validateHandler, addMembers);
 
-app.put(
+app.patch(
   "/add-group-admin",
   addGroupAdminValidator(),
   validateHandler,

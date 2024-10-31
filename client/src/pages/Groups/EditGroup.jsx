@@ -46,6 +46,7 @@ const EditGroup = ({
   chatId,
   isLoadingRemoveMember,
   deleteGroup,
+  setGroupAdmins,
 }) => {
   const dispatch = useDispatch();
   const navigate = useNavigate();
@@ -76,7 +77,7 @@ const EditGroup = ({
   }, []);
   useEffect(() => {
     if (groupDetails) {
-      setAvatarPreview(groupDetails.avatar);
+      setAvatarPreview(groupDetails.avatar.url);
     }
     if (avatar) {
       const reader = new FileReader();
@@ -99,18 +100,40 @@ const EditGroup = ({
   const [deleteOrUpdateAvatar] = useAsyncMutation(
     useDeleteOrRenameGroupAvatarMutation
   );
+  const handleImageUpload = async (event, isDelete) => {
+    console.log(isDelete);
+    try {
+      if (isDelete) {
+        // Call the API to delete the avatar
+        await deleteOrUpdateAvatar(
+          `Deleting avatar of Group `,
+          groupDetails.name,
+          {
+            chatId: groupDetails._id,
+            public_id: groupDetails.avatar.public_id,
+            isDelete,
+          }
+        );
+      } else {
+        // Prepare FormData for avatar update
+        const group = new FormData();
+        group.append("avatar", avatar);
+        group.append("chatId", groupDetails._id);
+        group.append("public_id", groupDetails.avatar.public_id);
 
-  const handleImageUpload = async (isDelete) => {
-    if (isDelete) {
-      await deleteOrUpdateAvatar(
-        `Deleting avatar of Group `,
-        groupDetails.name,
-        {}
-      );
-    } else {
-      await deleteOrUpdateAvatar();
+        // Call the API to update the avatar
+        await deleteOrUpdateAvatar(
+          `Updating avatar of Group `,
+          groupDetails.name,
+          group
+        );
+      }
+    } catch (error) {
+      console.error("Error handling image upload:", error);
+      // Optionally, add a user notification here
     }
   };
+
   if (!groupDetails) {
     return (
       <Container
@@ -198,7 +221,7 @@ const EditGroup = ({
                   Upload
                 </Button>
                 <Button
-                  onClick={() => handleImageUpload(true)}
+                  onClick={() => handleImageUpload("_", true)}
                   color="error"
                   sx={{
                     borderRadius: "24px",
@@ -288,7 +311,7 @@ const EditGroup = ({
           <Typography variant="h6" fontWeight="bold" mb={2}>
             <Chip label="Group Admin :" color="success" />
           </Typography>
-          <Stack direction="row" spacing={2}>
+          <Grid container sx={{ gap: "20px" }}>
             {groupAdmins?.map((admin) => (
               <Box
                 key={admin._id}
@@ -313,7 +336,7 @@ const EditGroup = ({
                     src={admin.avatar}
                     alt={admin.name}
                   />
-                  <Typography>{admin.name}</Typography>
+                  <Typography>{admin.name.slice(0.6)}...</Typography>
                   <Button
                     variant="outlined"
                     color="error"
@@ -324,7 +347,7 @@ const EditGroup = ({
                 </Stack>
               </Box>
             ))}
-          </Stack>
+          </Grid>
           <Button
             sx={{ mt: 2 }}
             variant="contained"
@@ -377,7 +400,7 @@ const EditGroup = ({
                         src={member.avatar}
                         alt={member.name}
                       />
-                      <Typography>{member.name}</Typography>
+                      <Typography>{member.name.slice(0, 6)}...</Typography>
                       <Button
                         variant="outlined"
                         color="error"
@@ -416,14 +439,13 @@ const EditGroup = ({
         {isAddMember && (
           <AddMemberModal chatId={chatId} groupName={groupName} />
         )}
-
-        {isAddGroupAdmin && (
-          <AddAdminModal
-            chatId={chatId}
-            groupName={groupName}
-            members={members}
-          />
-        )}
+        <AddAdminModal
+          groupAdmins={groupAdmins}
+          chatId={chatId}
+          groupName={groupName}
+          members={members}
+          setGroupAdmins={setGroupAdmins}
+        />
         <ConfirmDelete
           handleDeleteGroup={handleDeleteGroup}
           groupName={groupName}

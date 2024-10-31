@@ -3,7 +3,6 @@ import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { Box, Paper, Typography, Container, Tooltip } from "@mui/material";
 
 const IconBg = ({ icon, bgColor = "blue", name, count }) => {
-  console.log(count);
   return (
     <>
       <Tooltip title={name} placement="right">

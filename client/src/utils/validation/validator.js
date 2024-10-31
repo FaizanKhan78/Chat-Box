@@ -15,29 +15,21 @@ export const LoginSchema = yup.object().shape({
 });
 
 export const SignUpSchema = yup.object().shape({
-  avatar: yup
-    .mixed()
-    .required("Avatar Required")
-    .test("fileSize", "The file is too large", (value) => {
-      return value && value[0] && value[0].size <= 2000000; // 2MB max size
-    })
-    .test("fileType", "Unsupported file format", (value) => {
-      // console.log( value );
-      return (
-        value &&
-        value[0] &&
-        ["image/jpeg", "image/png", "image/gif"].includes(value[0].type)
-      );
-    }),
-
   username: yup
     .string()
     .required("User name Required")
-    .matches(/^[a-zA-Z][a-zA-Z0-9._]{4,19}$/, "Must Be of Alphanumeric"),
+    .matches(
+      /^[a-zA-Z][a-zA-Z0-9._]{4,19}$/,
+      "Must be alphanumeric and 5-20 characters long"
+    ),
+
   name: yup
     .string()
-    .required("User name Required")
-    .matches(/^[a-zA-Z][a-zA-Z0-9._]{4,19}$/, "Must Be of Alphanumeric"),
+    .required("Name Required")
+    .matches(
+      /^[a-zA-Z][a-zA-Z0-9._]{4,19}$/,
+      "Must be alphanumeric and 5-20 characters long"
+    ),
 
   email: yup.string().required("Email Required").email(),
 
@@ -46,7 +38,7 @@ export const SignUpSchema = yup.object().shape({
     .required("Password Required")
     .matches(
       /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&])[A-Za-z\d@$!%*?&]{8,20}$/,
-      "Must Be Alphanumeric"
+      "Password must contain uppercase, lowercase, number, and special character"
     ),
 });
 

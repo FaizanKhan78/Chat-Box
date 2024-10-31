@@ -154,7 +154,7 @@ const UserProfile = () => {
               <LinkRoundedIcon />
               <Box sx={{ textAlign: "center" }}>
                 All Links
-                <Typography>10</Typography>
+                <Typography>{friendDetails?.linkCount}</Typography>
               </Box>
             </Paper>
           </Badge>

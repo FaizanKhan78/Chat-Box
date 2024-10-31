@@ -138,7 +138,7 @@ const api = createApi({
     addGroupAdmin: builder.mutation({
       query: ({ members, chatId }) => ({
         url: `chat/add-group-admin`,
-        method: "PUT",
+        method: "PATCH",
         credentials: "include",
         body: { members, chatId },
       }),
@@ -188,12 +188,26 @@ const api = createApi({
       }),
     }),
     deleteOrRenameGroupAvatar: builder.mutation({
-      query: (data) => ({
-        url: `chat/group-avatar`,
-        credentials: "include",
-        method: "PATCH",
-        body: data,
-      }),
+      query: (data) => {
+        return {
+          url: `chat/group-avatar`,
+          method: "PATCH",
+          credentials: "include",
+          body: data,
+        };
+      },
+      invalidatesTags: ["Chat"],
+    }),
+    deleteOrRenameUserAvatar: builder.mutation({
+      query: (data) => {
+        return {
+          url: `user/user-avatar`,
+          method: "PATCH",
+          credentials: "include",
+          body: data,
+        };
+      },
+      invalidatesTags: ["Chat"],
     }),
   }),
 });
@@ -234,4 +248,6 @@ export const {
   useGetUserDetailsQuery,
   useGetGroupChatDetailsQuery,
   useDeleteOrRenameGroupAvatarMutation,
+
+  useDeleteOrRenameUserAvatarMutation,
 } = api;

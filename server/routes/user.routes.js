@@ -1,6 +1,7 @@
 import express from "express";
 import {
   acceptFriendRequest,
+  deleteOrUpdateAvatar,
   getAllNotification,
   getMyFriends,
   getMyProfile,
@@ -60,6 +61,8 @@ app.put(
   validateHandler,
   acceptFriendRequest
 );
+
+app.patch("/user-avatar", singleAvatar, deleteOrUpdateAvatar);
 
 app.patch("/update-details", updateDetails);
 

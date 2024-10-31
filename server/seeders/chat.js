@@ -26,7 +26,6 @@ export const createSingleChats = async (numChats) => {
     }
 
     await Promise.all(chatsPromises);
-    console.log("Single chats created");
     process.exit();
   } catch (error) {
     console.log(error);
@@ -72,7 +71,6 @@ export const createGroupChats = async (numChats) => {
     }
 
     await Promise.all(chatsPromises);
-    console.log("Group chats created");
     process.exit();
   } catch (error) {
     console.log(error);

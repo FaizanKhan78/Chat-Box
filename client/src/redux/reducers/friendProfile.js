@@ -12,6 +12,7 @@ const initialState = {
   videoCount: 0,
   imageCount: 0,
   audioCount: 0,
+  linkCount: 0,
   totalFile: 0,
 };
 const friendProfileSlice = createSlice({
@@ -53,9 +54,15 @@ const friendProfileSlice = createSlice({
       state.totalFile += 1;
       state.imageCount += 1;
     },
+    setLinkCount: (state) => {
+      state.linkCount += 1;
+    },
     setAudioCount: (state) => {
       state.totalFile += 1;
       state.audioCount += 1;
+    },
+    setMembers: (state, action) => {
+      state.members = action.payload;
     },
   },
 });
@@ -67,4 +74,6 @@ export const {
   setImageCount,
   setAudioCount,
   clearFriendProfile,
+  setMembers,
+  setLinkCount,
 } = friendProfileSlice.actions;

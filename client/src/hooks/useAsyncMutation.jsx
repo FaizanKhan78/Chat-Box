@@ -26,6 +26,7 @@ const useAsyncMutation = (mutationHook) => {
         });
         setData(res.data);
       } else {
+        console.log(res?.error);
         toast.error(res?.error?.data?.message || "An error occurred", {
           id: toastId,
           ...getToastConfig(theme),

@@ -3,6 +3,7 @@ import ArrowForwardIosRoundedIcon from "@mui/icons-material/ArrowForwardIosRound
 import MenuIcon from "@mui/icons-material/Menu";
 import SearchIcon from "@mui/icons-material/Search";
 import {
+  Backdrop,
   Box,
   Button,
   Chip,
@@ -19,7 +20,9 @@ import {
 } from "@mui/material";
 import { useDispatch, useSelector } from "react-redux";
 import { useLocation, useParams } from "react-router-dom";
-import { setIsMobile } from "../../redux/reducers/misc";
+import { setIsMobile, setIsParticipants } from "../../redux/reducers/misc";
+import { lazy, Suspense, useRef, useState } from "react";
+const Participants = lazy(() => import("../specific/Participants"));
 
 const Header = () => {
   const dispatch = useDispatch();
@@ -32,11 +35,19 @@ const Header = () => {
     dispatch(setIsMobile(!isMobile));
   };
 
+  const participantsRef = useRef(null);
+  const [anchorEl, setAnchorEl] = useState(null); // state for managing anchor element
+
   const location = useLocation();
   const { chatID } = useParams(); // Get the dynamic id from the URL
 
   const handleSearch = () => {
     console.log("Hello");
+  };
+
+  const handleParticipants = () => {
+    setAnchorEl(participantsRef.current);
+    dispatch(setIsParticipants(true));
   };
 
   const DrawerList = (
@@ -147,10 +158,10 @@ const Header = () => {
               {chatID && !friend.groupChat && `${friend?.name} Chat`}
             </Typography>
             {!(location.pathname === "/setting") && friend?.groupChat && (
-              <Box>
-                <Tooltip title="Participants">
+              <Box ref={participantsRef} onClick={handleParticipants}>
+                <Tooltip title="See All Participants">
                   <Chip
-                    label="Participants"
+                    label="See All Participants"
                     variant="outlined"
                     sx={{ cursor: "pointer", borderColor: "text.primary" }}
                   />
@@ -229,6 +240,9 @@ const Header = () => {
           />
         </Grid>
       </Grid>
+      <Suspense fallback={<Backdrop open />}>
+        <Participants anchorEl={anchorEl} />
+      </Suspense>
     </>
   );
 };

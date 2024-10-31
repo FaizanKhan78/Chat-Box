@@ -13,6 +13,7 @@ const initialState = {
   isDeleteMenu: false,
   isDeleteDialog: false,
   uploadingLoader: false,
+  isParticipants: false,
   selectedDeleteChat: {
     chatId: "",
     groupChat: false,
@@ -60,6 +61,9 @@ const miscSlice = createSlice({
     setSelectedDeleteChat: (state, action) => {
       state.selectedDeleteChat = action.payload;
     },
+    setIsParticipants: (state, action) => {
+      state.isParticipants = action.payload;
+    },
   },
 });
 
@@ -76,6 +80,8 @@ export const {
   setUploadingLoader,
   setSelectedDeleteChat,
   setIsAddGroupMember,
+
+  setIsParticipants,
   setIsDeleteDialog,
 } = miscSlice.actions;
 

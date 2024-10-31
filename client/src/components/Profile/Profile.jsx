@@ -1,6 +1,7 @@
 import NotificationsIcon from "@mui/icons-material/Notifications";
 import SettingsSharpIcon from "@mui/icons-material/SettingsSharp";
 import {
+  Avatar,
   Backdrop,
   Badge,
   Box,
@@ -129,16 +130,32 @@ const Profile = () => {
               },
             }}
             elevation={4}>
-            <Tooltip
-              title="Profile"
-              onClick={() => handleNavigation("/profile-photo")}>
-              <Box
-                style={{
-                  viewTransitionName: `profile-photo`,
-                  contain: "layout",
-                }}
-                component="img"
-                src={user?.avatar?.url || "path-to-default-avatar.jpg"} // Default image fallback
+            {user?.avatar?.url ? (
+              <Tooltip
+                title="Profile"
+                onClick={() => handleNavigation("/profile-photo")}>
+                <Box
+                  style={{
+                    viewTransitionName: `profile-photo`,
+                    contain: "layout",
+                  }}
+                  component="img"
+                  src={user?.avatar?.url} // Default image fallback
+                  sx={{
+                    width: "100%",
+                    height: "100%",
+                    objectFit: "cover",
+                    borderRadius: "50%", // Ensure the image remains circular
+                    transition: "transform 0.3s ease-in-out", // Smooth transition for the image itself
+                    "&:hover": {
+                      transform: "scale(1.05)", // Slightly zoom in on hover
+                    },
+                  }}
+                  alt="Profile Avatar"
+                />
+              </Tooltip>
+            ) : (
+              <Avatar
                 sx={{
                   width: "100%",
                   height: "100%",
@@ -148,10 +165,10 @@ const Profile = () => {
                   "&:hover": {
                     transform: "scale(1.05)", // Slightly zoom in on hover
                   },
-                }}
-                alt="Profile Avatar"
-              />
-            </Tooltip>
+                }}>
+                {user?.name?.slice(0, 2)}
+              </Avatar>
+            )}
           </Paper>
 
           <Box sx={{ display: "flex", alignItems: "center", gap: "10px" }}>

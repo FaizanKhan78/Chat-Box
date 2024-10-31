@@ -21,10 +21,16 @@ import { Link, useNavigate } from "react-router-dom";
 import PersonalDetails from "../../components/specific/PersonalDetails";
 import { VisuallyHiddenInput } from "../../components/styles/StyledComponents";
 import { getToastConfig } from "../../lib/features";
-import { clearAuthenticatedUser } from "../../redux/reducers/auth";
+import {
+  clearAuthenticatedUser,
+  setAuthenticatedUser,
+} from "../../redux/reducers/auth";
 import { getAdmin } from "../../redux/thunks/admin";
 import AdminModal from "../admin/AdminModal";
+import DeleteForeverIcon from "@mui/icons-material/DeleteForever";
 import { server } from "./../../constants/config";
+import useAsyncMutation from "../../hooks/useAsyncMutation";
+import { useDeleteOrRenameUserAvatarMutation } from "../../redux/api/api";
 
 // Reusable toast configuration
 
@@ -33,6 +39,8 @@ const Setting = () => {
 
   const navigate = useNavigate();
   const [modal, setModal] = useState(false);
+  const [avatar, setAvatar] = useState(null);
+  const [avatarPreview, setAvatarPreview] = useState(null);
   const theme = useTheme();
   const dispatch = useDispatch();
 
@@ -67,6 +75,58 @@ const Setting = () => {
   };
 
   useEffect(() => {
+    if (user) {
+      setAvatarPreview(user?.avatar.url);
+    }
+    if (avatar) {
+      const reader = new FileReader();
+
+      reader.onload = (e) => {
+        setAvatarPreview(e.target.result);
+      };
+      reader.readAsDataURL(avatar);
+    }
+  }, [avatar, user]);
+
+  const [userAvatar, _, data] = useAsyncMutation(
+    useDeleteOrRenameUserAvatarMutation
+  );
+
+  console.log(data);
+
+  useEffect(() => {
+    if (data) {
+      dispatch(setAuthenticatedUser(data.user));
+    }
+  }, [data, dispatch]);
+
+  const handleAvatarChange = (event) => {
+    setAvatar(event.target.files[0]);
+  };
+
+  const handleSubmit = async () => {
+    try {
+      const updatedUserAvatar = new FormData();
+      updatedUserAvatar.append("avatar", avatar);
+      updatedUserAvatar.append("public_id", user?.avatar?.public_id);
+      await userAvatar("Updating ", "Avatar ...", updatedUserAvatar);
+    } catch (error) {
+      console.log(error);
+    }
+  };
+
+  const handleDeleteAvatar = async () => {
+    const deleteUserAvatar = new FormData();
+    deleteUserAvatar.append("isDelete", true);
+    deleteUserAvatar.append("public_id", user?.avatar?.public_id);
+    try {
+      await userAvatar("Deleting ", "Avatar ...", deleteUserAvatar);
+    } catch (error) {
+      console.log(error);
+    }
+  };
+
+  useEffect(() => {
     dispatch(getAdmin());
   }, []);
 
@@ -82,7 +142,7 @@ const Setting = () => {
       <Grid container alignItems={"center"}>
         <Grid item xs={3}>
           <Avatar
-            src={user?.avatar?.url}
+            src={avatarPreview}
             sx={{
               width: "200px",
               height: "200px",
@@ -90,26 +150,53 @@ const Setting = () => {
           />
         </Grid>
 
-        <Grid item xs={8}>
+        <Grid
+          item
+          xs={8}
+          sx={{
+            display: "flex",
+            alignItems: "start",
+            justifyItems: "center",
+          }}>
+          <div>
+            <Button
+              component="label"
+              variant="outlined"
+              tabIndex={-1}
+              startIcon={<CloudUploadIcon />}
+              sx={{
+                color: "text.secondary",
+                borderRadius: "15px",
+                marginBottom: "15px",
+              }}>
+              Upload Avatar
+              <VisuallyHiddenInput type="file" onChange={handleAvatarChange} />
+            </Button>
+
+            <Typography sx={{ color: "gray" }}>
+              At least 800 x 800 is recommended.
+              <br />
+              JPG or PNG is allowed
+            </Typography>
+            <Button variant="outlined" onClick={handleSubmit}>
+              Submit
+            </Button>
+          </div>
+
           <Button
+            onClick={handleDeleteAvatar}
             component="label"
             variant="outlined"
+            color="error"
             tabIndex={-1}
-            startIcon={<CloudUploadIcon />}
+            startIcon={<DeleteForeverIcon />}
             sx={{
-              color: "text.secondary",
+              color: "error",
               borderRadius: "15px",
               marginBottom: "15px",
             }}>
-            Upload file
-            <VisuallyHiddenInput type="file" />
+            Delete Avatar
           </Button>
-
-          <Typography sx={{ color: "gray" }}>
-            At least 800 x 800 is recommended.
-            <br />
-            JPG or PNG is allowed
-          </Typography>
         </Grid>
       </Grid>
       <Divider sx={{ marginTop: "20px" }} />

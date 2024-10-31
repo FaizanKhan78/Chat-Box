@@ -132,8 +132,6 @@ io.on("connection", (socket) => {
   });
 
   socket.on(CHAT_JOINT, ({ userId, members }) => {
-    console.log(userId);
-    console.log(members);
     onlineUsers.add(userId?.toString());
 
     const membersSocket = getSocket(members);
