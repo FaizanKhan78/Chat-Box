@@ -27,14 +27,13 @@ import {
 const App = () => {
   const [showIntro, setShowIntro] = useState(true);
   const { user, isAdmin } = useSelector((state) => state.auth);
-
   useProfile();
 
   // Netflix intro timeout
   const playAudio = () => {
     const audio = new Audio(introAudio);
     audio.play().catch((error) => {
-      // console.log(error);
+      console.log("Audio play error:", error);
     });
   };
 

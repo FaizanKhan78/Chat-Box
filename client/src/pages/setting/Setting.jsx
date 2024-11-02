@@ -137,26 +137,32 @@ const Setting = () => {
         flexDirection: "column",
         justifyContent: "space-between",
         height: "100%",
+        padding: { xs: "1rem", sm: "2rem" }, // Adjust padding for different screen sizes
       }}>
       {/* Main Content */}
-      <Grid container alignItems={"center"}>
+      <Grid
+        container
+        alignItems={"center"}
+        sx={{ flexDirection: "column", alignItems: "flex-start" }}>
         <Grid item xs={3}>
           <Avatar
             src={avatarPreview}
             sx={{
-              width: "200px",
-              height: "200px",
+              width: { xs: "120px", sm: "150px", md: "200px" }, // Adjust sizes
+              height: { xs: "120px", sm: "150px", md: "200px" },
             }}
           />
         </Grid>
 
         <Grid
           item
-          xs={8}
           sx={{
             display: "flex",
-            alignItems: "start",
-            justifyItems: "center",
+            alignItems: "flex-start", // Align items to the start
+            justifyContent: "center", // Center align for larger screens
+            marginLeft: { md: "60px", xs: "0" }, // Adjust margin for smaller screens
+            marginTop: { sm: "20px", xs: "30px" },
+            flexDirection: { xs: "column-reverse", sm: "row" }, // Change flex direction for small screens
           }}>
           <div>
             <Button
@@ -168,17 +174,24 @@ const Setting = () => {
                 color: "text.secondary",
                 borderRadius: "15px",
                 marginBottom: "15px",
+                width: { xs: "100%", sm: "fit-content" }, // Full width on small screens
               }}>
               Upload Avatar
               <VisuallyHiddenInput type="file" onChange={handleAvatarChange} />
             </Button>
 
-            <Typography sx={{ color: "gray" }}>
+            <Typography
+              sx={{ color: "gray", fontSize: { xs: "0.8rem", sm: "1rem" } }}>
+              {" "}
+              {/* Responsive typography */}
               At least 800 x 800 is recommended.
               <br />
               JPG or PNG is allowed
             </Typography>
-            <Button variant="outlined" onClick={handleSubmit}>
+            <Button
+              variant="outlined"
+              onClick={handleSubmit}
+              sx={{ marginTop: { xs: "10px" } }}>
               Submit
             </Button>
           </div>
@@ -193,20 +206,34 @@ const Setting = () => {
             sx={{
               color: "error",
               borderRadius: "15px",
-              marginBottom: "15px",
+              marginBottom: { xs: "15px", sm: "0" }, // Adjust margin
+              whiteSpace: "nowrap",
+              width: { xs: "100%", sm: "fit-content" }, // Full width on small screens
             }}>
             Delete Avatar
           </Button>
         </Grid>
       </Grid>
-      <Divider sx={{ marginTop: "20px" }} />
+      <Divider
+        sx={{
+          marginTop: { xs: "30px", sm: "20px" },
+          marginBottom: { xs: "30px", sm: "20px" },
+        }}
+      />
 
       <PersonalDetails user={user} />
 
       <Box
         component={"div"}
-        sx={{ display: "flex", justifyContent: "space-between" }}>
-        <Box>
+        sx={{
+          display: "flex",
+          flexDirection: { xs: "column", sm: "row" }, // Stack buttons on smaller screens
+          justifyContent: "space-between",
+          marginTop: { xs: "30px" },
+        }}>
+        <Box sx={{ width: { xs: "100%", sm: "auto" } }}>
+          {" "}
+          {/* Full width on small screens */}
           {isAdmin && (
             <>
               {!adminAccess ? (
@@ -214,7 +241,11 @@ const Setting = () => {
                   variant="outlined"
                   component="label"
                   color="primary"
-                  sx={{ fontWeight: "550", marginBottom: "20px" }}
+                  sx={{
+                    fontWeight: "550",
+                    marginBottom: "20px",
+                    width: { xs: "100%", sm: "fit-content" },
+                  }} // Full width on small screens
                   onClick={handleIsAdminModal}>
                   <Link
                     component="button"
@@ -228,7 +259,11 @@ const Setting = () => {
                   component="label"
                   variant="outlined"
                   color="primary"
-                  sx={{ fontWeight: "550", marginBottom: "20px" }}
+                  sx={{
+                    fontWeight: "550",
+                    marginBottom: "20px",
+                    width: { xs: "100%", sm: "fit-content" },
+                  }} // Full width on small screens
                   onClick={navigateHandler}>
                   <Link
                     to="/admin"
@@ -242,27 +277,40 @@ const Setting = () => {
           )}
         </Box>
 
-        <Box item>
+        <Box item sx={{ width: { xs: "100%", sm: "auto" } }}>
+          {" "}
+          {/* Full width on small screens */}
           <Tooltip title="logout">
             <Button
               component="label"
               variant="outlined"
               color="primary"
-              sx={{ fontWeight: "550", marginBottom: "20px" }}
+              sx={{
+                fontWeight: "550",
+                marginBottom: "20px",
+                width: { xs: "100%", sm: "fit-content" },
+              }} // Full width on small screens
               startIcon={<FontAwesomeIcon icon={faSignOutAlt} />}
               onClick={handleLogout}>
               Logout
             </Button>
           </Tooltip>
         </Box>
-        <Box item>
+
+        <Box item sx={{ width: { xs: "100%", sm: "auto" } }}>
+          {" "}
+          {/* Full width on small screens */}
           <Link to="/group">
             <Tooltip title="My Groups">
               <Button
                 component="label"
                 variant="outlined"
                 color="primary"
-                sx={{ fontWeight: "550", marginBottom: "20px" }}
+                sx={{
+                  fontWeight: "550",
+                  marginBottom: "20px",
+                  width: { xs: "100%", sm: "fit-content" },
+                }} // Full width on small screens
                 startIcon={<FontAwesomeIcon icon={faPeopleGroup} />}>
                 My Groups
               </Button>

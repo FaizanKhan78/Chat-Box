@@ -54,11 +54,10 @@ export const login = TryCatch(async (req, res, next) => {
   const { username, password } = req.body;
 
   const user = await User.findOne({ username }).select("+password");
-
   if (!user) {
     return next(new ErrorHandler("Invalid Credentials", 400));
   }
-  const isPasswordMatch = compare(password, user.password);
+  const isPasswordMatch = await compare(password, user.password);
 
   if (!isPasswordMatch) {
     return next(new ErrorHandler("Invalid Credentials", 400));

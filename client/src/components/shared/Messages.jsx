@@ -3,10 +3,10 @@ import { Box, Typography } from "@mui/material";
 import { motion } from "framer-motion";
 import moment from "moment";
 import { memo } from "react";
-import { fileFormat } from "../../lib/features";
-import RenderAttachment from "./RenderAttachment";
 import { useDispatch } from "react-redux";
+import { fileFormat } from "../../lib/features";
 import { setLinkCount } from "../../redux/reducers/friendProfile";
+import RenderAttachment from "./RenderAttachment";
 
 // Framer Motion Variants
 const messageVariants = {

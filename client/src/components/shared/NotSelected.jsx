@@ -11,6 +11,7 @@ const NotSelected = ({ message }) => {
           backgroundColor: "#0202028a",
           padding: "1rem",
           borderRadius: "15px",
+          textAlign:"center"
         }}>
         {message}
       </Typography>

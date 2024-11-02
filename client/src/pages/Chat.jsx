@@ -5,11 +5,13 @@ import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import SendRoundedIcon from "@mui/icons-material/SendRounded";
 import {
   Box,
+  Drawer,
   IconButton,
   Paper,
   Skeleton,
   Stack,
   Tooltip,
+  useMediaQuery,
 } from "@mui/material";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { toast } from "react-hot-toast";
@@ -24,6 +26,7 @@ import {
   ALERT,
   CHAT_JOINT,
   CHAT_LEAVE,
+  COUNT_ATTACHMENTS,
   NEW_MESSAGE,
   START_TYPING,
   STOP_TYPING,
@@ -36,11 +39,20 @@ import {
   useGetMyMessagesQuery,
 } from "../redux/api/api";
 import { removeNewMessageAlert } from "../redux/reducers/chat";
-import { setFriendProfile, setMembers } from "../redux/reducers/friendProfile";
+import {
+  setAudioCount,
+  setFriendProfile,
+  setImageCount,
+  setMembers,
+  setOtherCount,
+  setVideoCount,
+} from "../redux/reducers/friendProfile";
 import { setIsFileMenu } from "../redux/reducers/misc";
 import { getSocket } from "../socket";
 import TypingLoader from "./../components/Layout/Loaders/TypingLoader";
 import useErrors from "./../hooks/useErrors";
+import { useSwipe } from "../hooks/useSwipe";
+import UserProfile from "./../components/Profile/UserProfile";
 
 const Chat = () => {
   const refContainer = useRef(null);
@@ -124,8 +136,6 @@ const Chat = () => {
 
   const newMessagesHandler = useCallback(
     (data) => {
-      console.log(data);
-      console.log(chatID);
       if (data.chatId !== chatID) return;
       setMessages((prev) => [...prev, data.message]);
     },
@@ -148,7 +158,10 @@ const Chat = () => {
 
   const alertListener = useCallback(
     (data) => {
-      if (data.chatID !== chatID) {
+      if (typeof data === "string") {
+        toast.success(data, getToastConfig(theme));
+      }
+      if (data.chatId !== chatID) {
         return;
       }
       const messageForRealTime = {
@@ -165,11 +178,32 @@ const Chat = () => {
     [chatID]
   );
 
+  const countAttachments = useCallback(
+    (data) => {
+      if (data) {
+        data?.message.forEach((element) => {
+          const type = element.url.split(".").pop();
+          if (type === "mp4") {
+            dispatch(setVideoCount());
+          } else if (type === "jpg" || type === "jpeg" || type === "png") {
+            dispatch(setImageCount());
+          } else if (type === "mp3" || type === "wav") {
+            // Adjust for audio formats
+            dispatch(setAudioCount());
+          } else {
+            dispatch(setOtherCount());
+          }
+        });
+      }
+    },
+    [chatID, dispatch]
+  );
   const eventHandlers = {
     [ALERT]: alertListener,
     [NEW_MESSAGE]: newMessagesHandler,
     [START_TYPING]: startTypingListener,
     [STOP_TYPING]: stopTypingListener,
+    [COUNT_ATTACHMENTS]: countAttachments,
   };
 
   useSocketEvents(socket, eventHandlers);
@@ -278,98 +312,119 @@ const Chat = () => {
     navigate,
   ]);
 
+  const [leftSwipe, setLeftSwipe] = useState(false);
+
+  const handleSwipeLeft = () => {
+    setLeftSwipe(true);
+  };
+
+  function handleCloseDrawer() {
+    setLeftSwipe(false);
+  }
+
+  useSwipe(handleSwipeLeft);
+
+  const showDrawer = useMediaQuery("(min-width:360px) and (max-width:960px)");
+
   return chatDetails?.isLoading ? (
     <Skeleton />
   ) : (
-    <Stack
-      width="100%"
-      height="100%" // Ensure the stack takes the full height
-      sx={{
-        position: "relative",
-      }}>
-      {/* Message Container */}
+    <>
       <Stack
-        id="smooth-scroll"
-        ref={refContainer}
         width="100%"
-        height="calc(100% - 64px)" // Adjust height to make room for the input
+        height="100%" // Ensure the stack takes the full height
         sx={{
-          overflowY: "auto", // Enable scrolling for messages
-          overscrollBehavior: "contain", // Prevent page scroll during overscroll
-          padding: "16px", // Add some padding for better UX
+          position: "relative",
         }}>
-        {allMessages.map((i) => (
-          <Messages key={i._id} message={i} user={user} />
-        ))}
-        {uploadingLoader && (
-          <Box
-            component={"div"}
-            sx={{
-              position: "absolute",
-              bottom: "75px",
-              width: "100%",
-              left: "0",
-            }}>
-            <FileUploader />
-          </Box>
-        )}
-        {userTyping && <TypingLoader />}
-        <div ref={bottomRef} />
-      </Stack>
-      {/* Input Box Container */}
-      <form
-        style={{
-          position: "absolute", // Keep it fixed at the bottom
-          bottom: 0,
-          width: "100%",
-          backgroundColor: theme.palette.background.paper, // Match background color
-          zIndex: 2, // Ensure it stays above the message area
-          borderBottom: "3.5px solid aqua",
-        }}
-        onSubmit={handleSubmit}>
-        <Paper elevation={5}>
-          <Stack
-            direction={"row"}
-            alignItems={"center"}
-            spacing={1}
-            padding="8px 16px"
-            borderRadius="10px">
-            <InputBox
-              placeholder="Write Your Message..."
+        {/* Message Container */}
+        <Stack
+          id="smooth-scroll"
+          ref={refContainer}
+          width="100%"
+          height="calc(100% - 64px)" // Adjust height to make room for the input
+          sx={{
+            overflowY: "auto", // Enable scrolling for messages
+            overscrollBehavior: "contain", // Prevent page scroll during overscroll
+            padding: "16px", // Add some padding for better UX
+          }}>
+          {allMessages.map((i) => (
+            <Messages key={i._id} message={i} user={user} />
+          ))}
+          {uploadingLoader && (
+            <Box
+              component={"div"}
               sx={{
-                bgcolor: "text.bgColor",
-                color: "text.primary",
-                flexGrow: 1,
-              }}
-              value={message}
-              onChange={handleInputChange}
-            />
-
-            <Tooltip title="Attachments">
-              <IconButton onClick={handleFileOpen}>
-                <FontAwesomeIcon icon={faPaperclip} />
-              </IconButton>
-            </Tooltip>
-
-            <Tooltip title="Send">
-              <IconButton
-                type="submit"
+                position: "absolute",
+                bottom: "75px",
+                width: "100%",
+                left: "0",
+              }}>
+              <FileUploader />
+            </Box>
+          )}
+          {userTyping && <TypingLoader />}
+          <div ref={bottomRef} />
+        </Stack>
+        {/* Input Box Container */}
+        <form
+          style={{
+            position: "absolute", // Keep it fixed at the bottom
+            bottom: 0,
+            width: "100%",
+            backgroundColor: theme.palette.background.paper, // Match background color
+            zIndex: 2, // Ensure it stays above the message area
+            borderBottom: "3.5px solid aqua",
+          }}
+          onSubmit={handleSubmit}>
+          <Paper elevation={5}>
+            <Stack
+              direction={"row"}
+              alignItems={"center"}
+              spacing={1}
+              padding="8px 16px"
+              borderRadius="10px">
+              <InputBox
+                placeholder="Write Your Message..."
                 sx={{
-                  padding: "8px",
-                  backgroundColor: "gray",
-                  borderRadius: "8px",
-                  "&:hover": {
-                    backgroundColor: "#666",
-                  },
-                }}>
-                <SendRoundedIcon />
-              </IconButton>
-            </Tooltip>
-          </Stack>
-        </Paper>
-      </form>
-      <FileMenu ref={fileMenuRef} anchorEl={fileMenuRef} chatId={chatID} />
-    </Stack>
+                  bgcolor: "text.bgColor",
+                  color: "text.primary",
+                  flexGrow: 1,
+                }}
+                value={message}
+                onChange={handleInputChange}
+              />
+
+              <Tooltip title="Attachments">
+                <IconButton onClick={handleFileOpen}>
+                  <FontAwesomeIcon icon={faPaperclip} />
+                </IconButton>
+              </Tooltip>
+
+              <Tooltip title="Send">
+                <IconButton
+                  type="submit"
+                  sx={{
+                    padding: "8px",
+                    backgroundColor: "gray",
+                    borderRadius: "8px",
+                    "&:hover": {
+                      backgroundColor: "#666",
+                    },
+                  }}>
+                  <SendRoundedIcon />
+                </IconButton>
+              </Tooltip>
+            </Stack>
+          </Paper>
+        </form>
+        <FileMenu ref={fileMenuRef} anchorEl={fileMenuRef} chatId={chatID} />
+      </Stack>
+      {showDrawer && (
+        <Drawer anchor="right" open={leftSwipe} onClose={handleCloseDrawer}>
+          <UserProfile />
+        </Drawer>
+      )}
+    </>
   );
 };
 

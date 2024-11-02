@@ -47,6 +47,8 @@ const EditGroup = ({
   isLoadingRemoveMember,
   deleteGroup,
   setGroupAdmins,
+  setGroupName,
+  setMembers,
 }) => {
   const dispatch = useDispatch();
   const navigate = useNavigate();
@@ -63,6 +65,9 @@ const EditGroup = ({
     deleteGroup("Deleting Group ...", groupName, chatId);
     navigate(`/group`);
     dispatch(setIsDeleteDialog(false));
+    setGroupName("");
+    setMembers([]);
+    setGroupAdmins([]);
   };
 
   const inputRef = useRef(null);
@@ -363,7 +368,7 @@ const EditGroup = ({
           <Typography variant="h6" fontWeight="bold" mb={2}>
             <Chip label="Members :" color="warning" />{" "}
           </Typography>
-          <Grid container spacing={3}>
+          <Grid container sx={{ gap: "20px" }}>
             {isLoadingRemoveMember ? (
               <>
                 <Backdrop
@@ -376,9 +381,10 @@ const EditGroup = ({
                 </Backdrop>
               </>
             ) : (
-              members?.map((member) => (
-                <Grid item xs={6} sm={4} md={3} key={member._id}>
+              <>
+                {members?.map((member) => (
                   <Box
+                    key={member._id}
                     sx={{
                       border: "2px solid #fbc02d",
                       borderRadius: "8px",
@@ -410,8 +416,8 @@ const EditGroup = ({
                       </Button>
                     </Stack>
                   </Box>
-                </Grid>
-              ))
+                ))}
+              </>
             )}
           </Grid>
           <Button

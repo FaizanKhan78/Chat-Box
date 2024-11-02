@@ -60,15 +60,12 @@ const LoginForm = ({ setIsLogin }) => {
       );
       dispatch(setAuthenticatedUser(response?.data?.user));
       navigate("/");
-      toast.success(response?.data?.message, {
-        style: {
-          color: "text.primary",
-          backgroundColor: "background.paper",
-        },
-      });
+      toast.success(response?.data?.message, getToastConfig(theme));
       setLoading(false);
       reset();
     } catch (error) {
+      setLoading(false);
+      console.log(error);
       toast.error(
         error?.response?.data?.message || "Something went wrong",
         getToastConfig(theme)

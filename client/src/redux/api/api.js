@@ -209,6 +209,17 @@ const api = createApi({
       },
       invalidatesTags: ["Chat"],
     }),
+    removeGroupAdmin: builder.mutation({
+      query: (data) => {
+        return {
+          url: `chat/remove-admin`,
+          method: "PATCH",
+          credentials: "include",
+          body: data,
+        };
+      },
+      invalidatesTags: ["Chat"],
+    }),
   }),
 });
 export default api;
@@ -250,4 +261,5 @@ export const {
   useDeleteOrRenameGroupAvatarMutation,
 
   useDeleteOrRenameUserAvatarMutation,
+  useRemoveGroupAdminMutation,
 } = api;

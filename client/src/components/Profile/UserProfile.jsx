@@ -183,7 +183,7 @@ const UserProfile = () => {
       />
       <IconBg
         icon={<FontAwesomeIcon icon={faBoxesStacked} color="#ffffff" />}
-        count={friendDetails?.audioCount}
+        count={friendDetails?.audioCount + friendDetails?.otherCount}
         bgColor="#d38b48"
         name={"Other"}
       />

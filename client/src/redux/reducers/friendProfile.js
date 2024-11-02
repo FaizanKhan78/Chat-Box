@@ -14,6 +14,7 @@ const initialState = {
   audioCount: 0,
   linkCount: 0,
   totalFile: 0,
+  otherCount: 0,
 };
 const friendProfileSlice = createSlice({
   name: "friendProfile",
@@ -40,6 +41,8 @@ const friendProfileSlice = createSlice({
         } else if (type === "mp3" || type === "wav") {
           // Adjust for audio formats
           state.audioCount += 1;
+        } else {
+          state.otherCount += 1;
         }
       });
     },
@@ -64,6 +67,10 @@ const friendProfileSlice = createSlice({
     setMembers: (state, action) => {
       state.members = action.payload;
     },
+    setOtherCount: (state) => {
+      state.otherCount += 1;
+      state.totalFile += 1;
+    },
   },
 });
 
@@ -75,5 +82,6 @@ export const {
   setAudioCount,
   clearFriendProfile,
   setMembers,
+  setOtherCount,
   setLinkCount,
 } = friendProfileSlice.actions;

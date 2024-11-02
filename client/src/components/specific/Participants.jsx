@@ -21,9 +21,7 @@ const Participants = ({ anchorEl }) => {
     dispatch(setIsParticipants(false));
   };
 
-  const sortedMembers = [...members].sort(
-    (a, b) => b.groupAdmin - a.groupAdmin
-  );
+  const sortedMembers = [...members].sort((a, b) => b.creator - a.creator);
 
   return (
     <Menu
@@ -57,7 +55,7 @@ const Participants = ({ anchorEl }) => {
               primary={
                 <Box display="flex" alignItems="center">
                   <Typography variant="subtitle1" fontWeight="bold">
-                    {member.name}
+                    {member.name.slice(0, 8)}...
                   </Typography>
                   {member.groupAdmin && (
                     <Typography

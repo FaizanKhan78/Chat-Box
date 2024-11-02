@@ -1,6 +1,6 @@
 import {
   ALERT,
-  GROUP_AVATAR,
+  COUNT_ATTACHMENTS,
   NEW_MESSAGE,
   NEW_MESSAGE_ALERT,
   REFETCH_CHATS,
@@ -168,13 +168,47 @@ export const addGroupAdmin = TryCatch(async (req, res, next) => {
   });
 });
 
-export const deleteGroupAdmin = TryCatch(async (req, res, next) => {
-  const { chatId, userId } = req.body;
-  console.log(chatId);
-  console.log(userId);
-  return res
-    .status(200)
-    .json({ success: true, message: "User Remove Successfully" });
+export const removeGroupAdmin = TryCatch(async (req, res, next) => {
+  const { userId, chatId } = req.body;
+
+  const [chat, userThatWillBeRemoved] = await Promise.all([
+    Chat.findById(chatId),
+    User.findById(userId, "name"),
+  ]);
+
+  if (!chat) {
+    return next(new ErrorHandler("Chat Not Found", 404));
+  }
+  if (!chat.groupChat) {
+    return next(new ErrorHandler("This is Not a Group Chat", 400));
+  }
+  if (chat.creator.toString() !== req.userID.toString()) {
+    return next(new ErrorHandler("You are not allowed to add members", 403));
+  }
+
+  if (chat.members.length <= 3) {
+    return next(new ErrorHandler("Group Must Have at least 3 members", 400));
+  }
+  const allChatMembers = chat.members.filter((i) => i.toString());
+
+  chat.groupAdmin = chat.groupAdmin.filter(
+    (i) => i.toString() !== userId.toString()
+  );
+  await chat.save();
+
+  emitEvent(req, ALERT, chat.members, {
+    message: `${userThatWillBeRemoved.name} has been removed from the Admin Role`,
+    chatId,
+  });
+
+  // console.log(allChatMembers);
+
+  emitEvent(req, REFETCH_CHATS, allChatMembers);
+
+  return res.status(200).json({
+    success: true,
+    message: "Member removed Successfully",
+  });
 });
 
 export const addMembers = TryCatch(async (req, res, next) => {
@@ -249,10 +283,7 @@ export const removeMember = TryCatch(async (req, res, next) => {
   if (!chat.groupChat) {
     return next(new ErrorHandler("This is Not a Group Chat", 400));
   }
-  if (
-    chat.creator.toString() !== req.userID.toString() ||
-    !chat.groupAdmin.find((i) => i.toString() === req.userID.toString())
-  ) {
+  if (chat.creator.toString() !== req.userID.toString()) {
     return next(new ErrorHandler("You are not allowed to add members", 403));
   }
 
@@ -262,7 +293,9 @@ export const removeMember = TryCatch(async (req, res, next) => {
   const allChatMembers = chat.members.filter((i) => i.toString());
 
   chat.members = chat.members.filter((i) => i.toString() !== userId.toString());
-
+  chat.groupAdmin = chat.groupAdmin.filter(
+    (i) => i.toString() !== userId.toString()
+  );
   await chat.save();
 
   emitEvent(req, ALERT, chat.members, {
@@ -380,17 +413,23 @@ export const setAttachment = TryCatch(async (req, res, next) => {
     },
   };
 
+  const alertMembers = chat.members.filter(
+    (member) => member !== req.userID.toString()
+  );
+
   const message = await Message.create(messageForDB);
 
-  // console.log("Message created", message);
+  console.log("Message created", message);
 
   emitEvent(req, NEW_MESSAGE, chat.members, {
     message: messageForRealTime,
     chatId,
   });
-
+  emitEvent(req, COUNT_ATTACHMENTS, alertMembers, {
+    message: attachments,
+    chatId,
+  });
   emitEvent(req, NEW_MESSAGE_ALERT, chat.members, { chatId });
-
   return res.status(200).json({
     success: true,
     message,
@@ -649,6 +688,11 @@ export const deleteOrRenameGroupAvatar = TryCatch(async (req, res, next) => {
     chat.avatar.public_id = "";
     chat.avatar.url = "";
     chat.save();
+    emitEvent(req, REFETCH_CHATS, chat.members);
+    emitEvent(req, ALERT, chat.members, {
+      message: `${chat.name} Avatar Delete Successfully`,
+      chatId,
+    });
     return res
       .status(200)
       .json({ success: true, message: "Avatar deleted Successfully" });
@@ -677,14 +721,14 @@ export const deleteOrRenameGroupAvatar = TryCatch(async (req, res, next) => {
       },
     };
     // console.log(messageForRealTime);
-    emitEvent(req, NEW_MESSAGE, chat.members, {
-      message: messageForRealTime,
-      chatId,
-    });
+    emitEvent(req, REFETCH_CHATS, chat.members);
 
     //? Add emit of all the group members must get the message that group icon has change
 
-    emitEvent(req, NEW_MESSAGE_ALERT, chat.members, { chatId });
+    emitEvent(req, ALERT, chat.members, {
+      message: `${chat.name} Avatar updated Successfully`,
+      chatId,
+    });
     return res
       .status(200)
       .json({ success: true, message: "Avatar Updated Successfully" });

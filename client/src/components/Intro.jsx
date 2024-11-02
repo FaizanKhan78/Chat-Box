@@ -24,7 +24,11 @@ const Intro = () => {
           animate={{ x: 0 }}
           transition={{ duration: 2, ease: "easeInOut" }}
           style={{ display: "flex", alignItems: "center" }}>
-          <Box component={"img"} src="/Chat_box.png" sx={{ width: "250px" }} />
+          <Box
+            component={"img"}
+            src="/Chat_box.png"
+            sx={{ width: { sm: "200px", xs: "80px" } }}
+          />
 
           {/* Animated Text with Color Change */}
           <motion.div
@@ -34,7 +38,7 @@ const Intro = () => {
               variant="h1"
               sx={{
                 fontWeight: "bold",
-                fontSize: "4rem",
+                fontSize: { xs: "2rem", sm: "3rem", md: "4rem" },
                 whiteSpace: "nowrap", // Ensures the text stays on one line
                 fontFamily: "myFont",
               }}>

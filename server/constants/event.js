@@ -15,4 +15,4 @@ export const CHAT_JOINT = "CHAT_JOINT";
 export const CHAT_LEAVE = "CHAT_LEAVE";
 export const ONLINE_USERS = "ONLINE_USERS";
 
-export const GROUP_AVATAR = "GROUP_AVATAR";
+export const COUNT_ATTACHMENTS = "COUNT_ATTACHMENTS";

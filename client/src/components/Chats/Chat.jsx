@@ -2,6 +2,7 @@ import GroupAddIcon from "@mui/icons-material/GroupAdd";
 import GroupsIcon from "@mui/icons-material/Groups";
 import {
   Backdrop,
+  Box,
   Grid,
   IconButton,
   Paper,
@@ -9,6 +10,7 @@ import {
   TextField,
   Tooltip,
   Typography,
+  useMediaQuery,
 } from "@mui/material";
 import {
   lazy,
@@ -19,7 +21,15 @@ import {
   useState,
 } from "react";
 import { useDispatch, useSelector } from "react-redux";
+import { useParams } from "react-router-dom";
+import {
+  NEW_MESSAGE_ALERT,
+  ONLINE_USERS,
+  REFETCH_CHATS,
+} from "../../constants/event";
 import useErrors from "../../hooks/useErrors";
+import useSocketEvents from "../../hooks/useSocketEvents";
+import { getOrSaveFromLocalStorage } from "../../lib/features";
 import { useMyChatsQuery } from "../../redux/api/api";
 import {
   setIsDeleteMenu,
@@ -27,25 +37,16 @@ import {
   setIsSearch,
   setSelectedDeleteChat,
 } from "../../redux/reducers/misc";
+import { getSocket } from "../../socket";
+import DeleteChatMenu from "../dialog/DeleteChatMenu";
 import NewFriend from "../shared/NewFriend";
 import ChatList from "./ChatList";
-import { getOrSaveFromLocalStorage } from "../../lib/features";
-import {
-  NEW_MESSAGE_ALERT,
-  ONLINE_USERS,
-  REFETCH_CHATS,
-} from "../../constants/event";
-import useSocketEvents from "../../hooks/useSocketEvents";
-import { getSocket } from "../../socket";
-import { useNavigate, useParams } from "react-router-dom";
-import DeleteChatMenu from "../dialog/DeleteChatMenu";
 
 const NewGroup = lazy(() => import("./../shared/NewGroup"));
 
 const Chat = () => {
   const [onlineUsers, setOnlineUsers] = useState([]);
   const { isSearch, isNewGroup } = useSelector((state) => state.misc);
-  const navigate = useNavigate();
   const dispatch = useDispatch();
   const socket = getSocket();
   const chatID = useParams();
@@ -83,8 +84,7 @@ const Chat = () => {
 
   const refetchListener = useCallback(() => {
     refetch();
-    navigate("/");
-  }, [refetch, navigate]);
+  }, [refetch]);
 
   const onlineUsersListener = useCallback((data) => {
     setOnlineUsers(data);
@@ -106,6 +106,15 @@ const Chat = () => {
       chat.name.includes(e.target.value)
     );
     setChats(filterChat);
+  };
+  const isMobile = useMediaQuery("(min-width:360px) and (max-width:600px)");
+
+  const isTablet = useMediaQuery("(min-width:600px) and (max-width:960px)");
+  console.log(isTablet);
+  const getBoxHeight = () => {
+    if (isTablet) {
+      return "20vh"; // Tablet height
+    }
   };
 
   return (
@@ -167,20 +176,16 @@ const Chat = () => {
         </Grid>
       </Grid>
 
-      {isNewGroup && (
-        <Suspense fallback={<Backdrop open />}>
-          <NewGroup isNewGroup={isNewGroup} handleNewGroup={handleNewGroup} />
-        </Suspense>
-      )}
+      <Suspense fallback={<Backdrop open />}>
+        <NewGroup isNewGroup={isNewGroup} handleNewGroup={handleNewGroup} />
+      </Suspense>
 
-      {isSearch && (
-        <Suspense fallback={<Backdrop open />}>
-          <NewFriend isSearch={isSearch} handleNewFriend={handleNewFriend} />
-        </Suspense>
-      )}
+      <Suspense fallback={<Backdrop open />}>
+        <NewFriend isSearch={isSearch} handleNewFriend={handleNewFriend} />
+      </Suspense>
 
       {/* Chat List */}
-      <div style={{ height: `calc(100vh - 58vh)` }}>
+      <Box style={{ height: getBoxHeight() }}>
         {isLoading ? (
           <Skeleton />
         ) : (
@@ -192,8 +197,13 @@ const Chat = () => {
             onlineUsers={onlineUsers}
           />
         )}
-      </div>
-      <DeleteChatMenu deleteOptionAnchor={deleteOptionAnchor} />
+      </Box>
+      <Box component={"div"}>
+        {/* Conditionally render DeleteChatMenu only if isTablet is true */}
+        {!isMobile && (
+          <DeleteChatMenu deleteOptionAnchor={deleteOptionAnchor} />
+        )}
+      </Box>
     </div>
   );
 };

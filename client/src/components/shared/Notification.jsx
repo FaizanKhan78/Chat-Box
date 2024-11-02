@@ -1,6 +1,5 @@
 import {
   faCheckCircle,
-  faFileAlt,
   faTimesCircle,
 } from "@fortawesome/free-solid-svg-icons";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
@@ -42,7 +41,7 @@ const Notification = ({
     });
   };
 
-  const handleDownloadFile = (_id, file, accept) => {};
+  // const handleDownloadFile = (_id, file, accept) => {};
 
   return (
     <Menu
@@ -128,7 +127,7 @@ const Notification = ({
                   </Button>
                 </Box>
               )}
-              {notif.buttons && (
+              {/* {notif.buttons && (
                 <Box
                   sx={{
                     mt: 1,
@@ -164,7 +163,7 @@ const Notification = ({
                   />
                   {notif.file}
                 </Typography>
-              )}
+              )} */}
               <Divider sx={{ mt: 2 }} />
             </MenuItem>
           ))

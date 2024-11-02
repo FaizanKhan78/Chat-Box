@@ -11,6 +11,7 @@ import {
   myChats,
   myGroupChats,
   newGroup,
+  removeGroupAdmin,
   removeMember,
   renameGroup,
   setAttachment,
@@ -82,11 +83,18 @@ app.get(
 
 app.patch("/group-avatar", singleAvatar, deleteOrRenameGroupAvatar);
 
+//* Remove Group Admin
+app.patch(
+  "/remove-admin",
+  removeMemberValidator(),
+  validateHandler,
+  removeGroupAdmin
+);
+
 //* Get Chat Details,rename,delete
 app
   .route("/:id")
   .get(getChatDetailsValidator(), validateHandler, getChatDetails)
   .put(renameGroupValidator(), validateHandler, renameGroup)
   .delete(deleteChatValidator(), validateHandler, deleteChat);
-
 export default app;

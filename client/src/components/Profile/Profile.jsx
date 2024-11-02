@@ -19,6 +19,7 @@ import {
   useRef,
   useState,
 } from "react";
+import notificationSound from "../../audio/notificationSound.wav";
 import { useDispatch, useSelector } from "react-redux";
 import { useNavigate, useParams } from "react-router-dom";
 import {
@@ -45,7 +46,6 @@ const Profile = () => {
   const { isNotification } = useSelector((state) => state.misc);
   const { notificationsCount } = useSelector((state) => state.chat);
   const { chatID } = useParams();
-
   const [request, setRequest] = useState([]);
   useEffect(() => {
     if (data?.request) {
@@ -88,6 +88,8 @@ const Profile = () => {
   const socket = getSocket();
 
   const newFriendRequestListener = useCallback(() => {
+    const audio = new Audio(notificationSound);
+    audio.play();
     dispatch(incrementNotificationsCount());
   }, [dispatch]);
 

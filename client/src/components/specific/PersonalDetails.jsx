@@ -1,10 +1,27 @@
 import { useState } from "react";
 import { faPenToSquare } from "@fortawesome/free-solid-svg-icons";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
-import { Box, Button, Chip, Container, Stack, Typography } from "@mui/material";
+import {
+  Box,
+  Button,
+  Chip,
+  Container,
+  Grid,
+  Stack,
+  Typography,
+} from "@mui/material";
 import EditProfileModal from "../shared/EditProfileModal";
+
 const PersonalDetails = ({ user }) => {
   const [open, setOpen] = useState(false);
+
+  const email = user?.email; // Ensure that user.email is defined
+
+  // Check if email exists and contains an "@" symbol
+  if (email && email.includes("@")) {
+    // Get the part of the email before the "@" symbol
+    var beforeAt = email.slice(0, email.indexOf("@"));
+  }
 
   return (
     <Container
@@ -20,7 +37,7 @@ const PersonalDetails = ({ user }) => {
       }}>
       <Stack
         direction={{ xs: "column", sm: "row" }}
-        justifyContent={"space-between"}
+        justifyContent="space-between"
         alignItems={{ xs: "flex-start", sm: "center" }}
         spacing={{ xs: 2, sm: 0 }}>
         <div>
@@ -28,19 +45,20 @@ const PersonalDetails = ({ user }) => {
             sx={{
               fontWeight: "bold",
               fontFamily: "Gilroy",
-              fontSize: { xs: "28px", sm: "34px" },
+              fontSize: { xs: "24px", sm: "28px", md: "34px" },
             }}>
             Personal Info
           </Typography>
           {user.appAdmin && (
             <Chip
-              size="medium" // Use "small" or "medium"
-              variant="filled" // Use "filled" or "outlined"
-              color="success" // Use "error" for red color (danger equivalent)
-              label="App Admin" // Added label prop for text inside the Chip
+              size="medium"
+              variant="filled"
+              color="success"
+              label="App Admin"
               sx={{
                 fontWeight: "bold",
                 fontFamily: "Gilroy",
+                marginTop: { xs: 1, sm: 0 },
               }}
             />
           )}
@@ -66,12 +84,8 @@ const PersonalDetails = ({ user }) => {
         </Button>
       </Stack>
 
-      <Stack
-        direction={{ xs: "column", sm: "row" }}
-        justifyContent="space-between"
-        alignItems="flex-start"
-        spacing={{ xs: 4, sm: 2 }}>
-        <Box>
+      <Grid container spacing={4}>
+        <Grid item xs={12} sm={6}>
           <Typography
             sx={{
               fontSize: "18px",
@@ -88,8 +102,8 @@ const PersonalDetails = ({ user }) => {
             }}>
             {user?.name}
           </Typography>
-        </Box>
-        <Box>
+        </Grid>
+        <Grid item xs={12} sm={6}>
           <Typography
             sx={{
               fontSize: "18px",
@@ -106,8 +120,8 @@ const PersonalDetails = ({ user }) => {
             }}>
             {user?.bio}
           </Typography>
-        </Box>
-        <Box>
+        </Grid>
+        <Grid item xs={12} sm={6}>
           <Typography
             sx={{
               fontSize: "18px",
@@ -122,10 +136,10 @@ const PersonalDetails = ({ user }) => {
               fontFamily: "Gilroy",
               fontWeight: "medium",
             }}>
-            {user?.email}
+            {beforeAt}...
           </Typography>
-        </Box>
-        <Box>
+        </Grid>
+        <Grid item xs={12} sm={6}>
           <Typography
             sx={{
               fontSize: "18px",
@@ -142,8 +156,8 @@ const PersonalDetails = ({ user }) => {
             }}>
             {user?.number}
           </Typography>
-        </Box>
-      </Stack>
+        </Grid>
+      </Grid>
 
       <EditProfileModal open={open} setOpen={setOpen} />
     </Container>

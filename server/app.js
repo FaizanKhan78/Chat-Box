@@ -159,7 +159,7 @@ io.on("connection", (socket) => {
 app.use(errorMiddleWare);
 
 // * Making the Server using listen Function in Express.
-server.listen(process.env.PORT, () => {
+server.listen(process.env.PORT, "0.0.0.0", () => {
   console.log(
     `Server is Running At ${process.env.PORT} in ${process.env.NODE_ENV}`
   );

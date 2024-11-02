@@ -6,6 +6,7 @@ import {
   useDeleteChatMutation,
   useGetChatDetailsQuery,
   useGetMyGroupsQuery,
+  useRemoveGroupAdminMutation,
   useRemoveGroupMemberMutation,
   useRenameGroupMutation,
 } from "../../redux/api/api";
@@ -48,6 +49,8 @@ const Group = () => {
     useRemoveGroupMemberMutation
   );
   const [deleteGroup] = useAsyncMutation(useDeleteChatMutation);
+
+  const [removeAdmin] = useAsyncMutation(useRemoveGroupAdminMutation);
 
   const errors = [
     { isError, error },
@@ -97,9 +100,19 @@ const Group = () => {
     navigate("/setting");
   };
 
-  const handleRemoveAdmin = (id) => {
-    console.log(id);
+  const handleRemoveAdmin = async (id) => {
+    await removeAdmin("Remove A Group Admin from ", groupName, {
+      chatId,
+      userId: id,
+    });
   };
+  // * Add the Navigation to other Group when a Group is Deleted.
+  // * handle The Conditions Like if the middle one is deleted then navigate to previous and if first one is deleted the navigate to 2 and if last one is deleted then navigate to previous one
+  // useEffect(()=>{
+  //   if(data?.groups){
+
+  //   }
+  // },[data?.groups])
 
   return (
     <>
@@ -115,6 +128,8 @@ const Group = () => {
           <Typography
             sx={{
               fontSize: "40px",
+              textAlign: "center",
+              padding: "20px",
             }}>
             Your Are Not Group Admin of Any Group
           </Typography>
@@ -128,10 +143,10 @@ const Group = () => {
         </Box>
       ) : (
         <Grid container>
-          <Grid item xs={3}>
+          <Grid item xs={0} md={3}>
             <GroupList groups={data?.groups} />
           </Grid>
-          <Grid item xs={9} sx={{ height: "100vh" }}>
+          <Grid item xs={12} md={9} sx={{ height: "100vh" }}>
             <EditGroup
               groupDetails={groupDetails?.data?.chat}
               groupName={groupName}
@@ -147,6 +162,8 @@ const Group = () => {
               isLoadingRemoveMember={isLoadingRemoveMember}
               deleteGroup={deleteGroup}
               setGroupAdmins={setGroupAdmins}
+              setMembers={setMembers}
+              setGroupName={setGroupName}
             />
           </Grid>
         </Grid>
